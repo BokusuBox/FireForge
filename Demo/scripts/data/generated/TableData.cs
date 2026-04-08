@@ -12,6 +12,7 @@ public class TableData
 
     public string TableName { get; }
     public int Count => _records.Count;
+    public bool IsLoaded { get; private set; }
 
     public TableData(string tableName)
     {
@@ -24,12 +25,14 @@ public class TableData
         if (string.IsNullOrEmpty(jsonText))
         {
             GD.PrintErr($"[TableData] 加载表失败: {TableName}");
+            IsLoaded = false;
             return;
         }
         var parsed = Json.ParseString(jsonText);
         if (parsed == null || parsed.VariantType != Variant.Type.Dictionary)
         {
             GD.PrintErr($"[TableData] JSON格式无效: {TableName}");
+            IsLoaded = false;
             return;
         }
         var root = new Godot.Collections.Dictionary(parsed);
@@ -63,6 +66,7 @@ public class TableData
         }
 
         BuildIndexes();
+        IsLoaded = true;
         GD.Print($"[TableData] 加载表 {TableName}: {_records.Count} 条记录");
     }
 

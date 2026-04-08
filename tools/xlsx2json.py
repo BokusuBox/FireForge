@@ -22,7 +22,133 @@ import os
 import json
 import re
 import sys
+import keyword
+
+CS_KEYWORDS = set(keyword.kwlist) | {
+    'abstract', 'as', 'base', 'bool', 'break', 'byte', 'case', 'catch', 'char',
+    'checked', 'class', 'const', 'continue', 'decimal', 'default', 'delegate',
+    'do', 'double', 'else', 'enum', 'event', 'explicit', 'extern', 'false',
+    'finally', 'fixed', 'float', 'for', 'foreach', 'goto', 'if', 'implicit',
+    'in', 'int', 'interface', 'internal', 'is', 'lock', 'long', 'namespace',
+    'new', 'null', 'object', 'operator', 'out', 'override', 'params', 'private',
+    'protected', 'public', 'readonly', 'ref', 'return', 'sbyte', 'sealed',
+    'short', 'sizeof', 'stackalloc', 'static', 'string', 'struct', 'switch',
+    'this', 'throw', 'true', 'try', 'typeof', 'uint', 'ulong', 'unchecked',
+    'unsafe', 'ushort', 'using', 'virtual', 'void', 'volatile', 'while',
+    'var', 'dynamic', 'async', 'await', 'partial', 'yield', 'nameof',
+    'value', 'get', 'set', 'add', 'remove', 'global', 'alias', 'ascending',
+    'descending', 'from', 'group', 'into', 'join', 'let', 'on', 'orderby',
+    'select', 'where', 'NotImplementedException',
+}
+
+VALID_IDENTIFIER_RE = re.compile(r'^[A-Za-z_][A-Za-z0-9_]*$')
+
 from openpyxl import load_workbook
+
+
+def validate_enum_name(name, source):
+    errors = []
+    if not VALID_IDENTIFIER_RE.match(name):
+        errors.append(f"[错误] 枚举名 '{name}' 不是合法的C#标识符 ({source})")
+    if name in CS_KEYWORDS:
+        errors.append(f"[错误] 枚举名 '{name}' 是C#关键字，请修改 ({source})")
+    return errors
+
+
+def validate_enum_member(enum_name, member_name, member_value, source):
+    errors = []
+    if not member_name:
+        errors.append(f"[错误] 枚举 {enum_name} 的值 {member_value} 缺少枚举成员名(B列) ({source})")
+    elif not VALID_IDENTIFIER_RE.match(member_name):
+        errors.append(f"[错误] 枚举 {enum_name} 的成员名 '{member_name}' 不是合法的C#标识符 ({source})")
+    if member_name and member_name in CS_KEYWORDS:
+        errors.append(f"[错误] 枚举 {enum_name} 的成员名 '{member_name}' 是C#关键字，请修改 ({source})")
+    return errors
+
+
+def parse_enum_xlsx(xlsx_path):
+    file_name = os.path.splitext(os.path.basename(xlsx_path))[0]
+    all_errors = []
+    enum_defs = {}
+
+    try:
+        wb = load_workbook(xlsx_path, read_only=True, data_only=True)
+    except Exception as e:
+        all_errors.append(f"[错误] 无法打开文件 {file_name}.xlsx: {e}")
+        return enum_defs, all_errors
+
+    for sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+        if ws.max_row < 2 or ws.max_column < 1:
+            continue
+
+        current_enum = None
+        current_members = []
+
+        for row in range(1, ws.max_row + 1):
+            a_val = ws.cell(row=row, column=1).value
+            b_val = ws.cell(row=row, column=2).value
+            c_val = ws.cell(row=row, column=3).value
+
+            if a_val is None:
+                continue
+
+            a_str = str(a_val).strip()
+
+            if not a_str:
+                continue
+
+            is_number = False
+            try:
+                int_val = int(float(a_str))
+                is_number = True
+            except (ValueError, TypeError):
+                pass
+
+            if not is_number:
+                if current_enum is not None:
+                    enum_defs[current_enum] = current_members
+                current_enum = a_str
+                current_members = []
+                source = f"{file_name}.xlsx / {sheet_name} / 第{row}行"
+                all_errors.extend(validate_enum_name(current_enum, source))
+            else:
+                if current_enum is None:
+                    source = f"{file_name}.xlsx / {sheet_name} / 第{row}行"
+                    all_errors.append(f"[错误] 第{row}行A列值为数值 '{a_str}'，但之前没有枚举名定义 ({source})")
+                    continue
+
+                member_name = str(b_val).strip() if b_val is not None else ''
+                comment = str(c_val).strip() if c_val is not None else ''
+                source = f"{file_name}.xlsx / {sheet_name} / {current_enum} / 第{row}行"
+                all_errors.extend(validate_enum_member(current_enum, member_name, a_str, source))
+                current_members.append({
+                    'name': member_name,
+                    'value': int_val,
+                    'comment': comment,
+                })
+
+        if current_enum is not None:
+            enum_defs[current_enum] = current_members
+
+    wb.close()
+
+    seen_names = {}
+    for enum_name, members in enum_defs.items():
+        name_set = set()
+        value_set = set()
+        for m in members:
+            if m['name'] in name_set:
+                all_errors.append(f"[错误] 枚举 {enum_name} 中存在重复的成员名 '{m['name']}'")
+            name_set.add(m['name'])
+            if m['value'] in value_set:
+                all_errors.append(f"[错误] 枚举 {enum_name} 中存在重复的值 {m['value']} (成员 '{m['name']}')")
+            value_set.add(m['value'])
+        if enum_name in seen_names:
+            all_errors.append(f"[错误] 枚举名 '{enum_name}' 重复定义 (在 {seen_names[enum_name]} 和当前Sheet中)")
+        seen_names[enum_name] = enum_name
+
+    return enum_defs, all_errors
 
 def _resolve_root_dir():
     if getattr(sys, 'frozen', False):
@@ -61,16 +187,19 @@ def parse_type(type_str):
 def convert_basic_value(raw_value, basic_type):
     if raw_value is None:
         return None
-    if basic_type == 'int':
-        return int(float(str(raw_value)))
-    elif basic_type == 'float':
-        return float(str(raw_value))
-    elif basic_type == 'double':
-        return float(str(raw_value))
-    elif basic_type == 'string':
-        return str(raw_value)
-    elif basic_type == 'bool':
-        return str(raw_value).lower() in ('true', '1', 'yes')
+    try:
+        if basic_type == 'int':
+            return int(float(str(raw_value)))
+        elif basic_type == 'float':
+            return float(str(raw_value))
+        elif basic_type == 'double':
+            return float(str(raw_value))
+        elif basic_type == 'string':
+            return str(raw_value)
+        elif basic_type == 'bool':
+            return str(raw_value).lower() in ('true', '1', 'yes')
+    except (ValueError, TypeError) as e:
+        raise ValueError(f"无法将 '{raw_value}' 转换为 {basic_type}: {e}")
     return raw_value
 
 
@@ -82,7 +211,10 @@ def convert_value(raw_value, type_info):
         if not raw_str:
             return []
         parts = raw_str.split(type_info['separator'])
-        return [convert_basic_value(p.strip(), type_info['element_type']) for p in parts]
+        elem_type = type_info['element_type']
+        if elem_type in BASIC_TYPES:
+            return [convert_basic_value(p.strip(), elem_type) for p in parts]
+        return [p.strip() for p in parts]
     if type_info['kind'] == 'basic':
         return convert_basic_value(raw_value, type_info['type'])
     if type_info['kind'] == 'enum':
@@ -93,6 +225,8 @@ def convert_value(raw_value, type_info):
 def process_sheet(ws, sheet_name):
     if ws.max_row < 4 or ws.max_column < 2:
         return None
+
+    errors = []
 
     field_names = []
     for col in range(2, ws.max_column + 1):
@@ -110,7 +244,13 @@ def process_sheet(ws, sheet_name):
         if val is None:
             field_types.append({'kind': 'basic', 'type': 'string'})
         else:
-            field_types.append(parse_type(str(val).strip()))
+            type_str = str(val).strip()
+            type_info = parse_type(type_str)
+            if type_info['kind'] == 'list':
+                elem = type_info['element_type']
+                if elem not in BASIC_TYPES and not VALID_IDENTIFIER_RE.match(elem):
+                    errors.append(f"[错误] 表 {sheet_name} 第2行第{col}列: list元素类型 '{elem}' 不是合法标识符")
+            field_types.append(type_info)
 
     field_comments = []
     for col in range(2, 2 + len(field_names)):
@@ -129,6 +269,19 @@ def process_sheet(ws, sheet_name):
                     if enum_name not in enum_values:
                         enum_values[enum_name] = set()
                     enum_values[enum_name].add(str(cell_val).strip())
+            elif type_info['kind'] == 'list' and type_info['element_type'] not in BASIC_TYPES:
+                cell_val = ws.cell(row=row, column=col_idx + 2).value
+                if cell_val is not None:
+                    enum_name = type_info['element_type']
+                    raw_str = str(cell_val).strip()
+                    if raw_str:
+                        if enum_name not in enum_values:
+                            enum_values[enum_name] = set()
+                        parts = raw_str.split(type_info['separator'])
+                        for p in parts:
+                            v = p.strip()
+                            if v:
+                                enum_values[enum_name].add(v)
 
         marker = ws.cell(row=row, column=1).value
         if marker is not None and str(marker).strip() == '##':
@@ -145,7 +298,13 @@ def process_sheet(ws, sheet_name):
         record = {}
         for col_idx, field_name in enumerate(field_names):
             raw_val = ws.cell(row=row, column=col_idx + 2).value
-            record[field_name] = convert_value(raw_val, field_types[col_idx])
+            type_info = field_types[col_idx]
+            try:
+                record[field_name] = convert_value(raw_val, type_info)
+            except ValueError as e:
+                col_letter = chr(ord('A') + col_idx + 1)
+                errors.append(f"[错误] 表 {sheet_name} 第{row}行 {col_letter}列 ({field_name}): {e}")
+                record[field_name] = None
         data_rows.append(record)
 
     fields = []
@@ -160,7 +319,8 @@ def process_sheet(ws, sheet_name):
         'tableName': sheet_name,
         'fields': fields,
         'data': data_rows,
-        'enum_values': enum_values
+        'enum_values': enum_values,
+        'errors': errors
     }
 
 
@@ -177,20 +337,35 @@ def write_json(table_data, output_dir):
     print(f"  [JSON] {json_path}")
 
 
-def generate_enum_cs(all_enum_values):
+def generate_enum_cs(enum_defs, auto_enum_values):
     lines = []
     lines.append('// 自动生成的代码 - 请勿手动修改')
-    lines.append('// 枚举定义：由导表工具根据 xlsx 数据自动生成')
+    lines.append('// 枚举定义：由导表工具根据 __enum__.xlsx 和数据表自动生成')
     lines.append('')
-    for enum_name in sorted(all_enum_values.keys()):
-        values = sorted(all_enum_values[enum_name])
-        lines.append(f'public enum {enum_name}')
-        lines.append('{')
-        for i, val in enumerate(values):
-            comma = ',' if i < len(values) - 1 else ''
-            lines.append(f'    {val}{comma}')
-        lines.append('}')
-        lines.append('')
+
+    all_enum_names = set(enum_defs.keys()) | set(auto_enum_values.keys())
+
+    for enum_name in sorted(all_enum_names):
+        if enum_name in enum_defs:
+            members = enum_defs[enum_name]
+            lines.append(f'public enum {enum_name}')
+            lines.append('{')
+            for i, m in enumerate(members):
+                comma = ',' if i < len(members) - 1 else ''
+                comment = f'  // {m["comment"]}' if m['comment'] else ''
+                lines.append(f'    {m["name"]} = {m["value"]}{comma}{comment}')
+            lines.append('}')
+            lines.append('')
+        else:
+            values = sorted(auto_enum_values[enum_name])
+            lines.append(f'public enum {enum_name}')
+            lines.append('{')
+            for i, val in enumerate(values):
+                comma = ',' if i < len(values) - 1 else ''
+                lines.append(f'    {val}{comma}')
+            lines.append('}')
+            lines.append('')
+
     return '\n'.join(lines)
 
 
@@ -279,6 +454,7 @@ public class TableData
 
     public string TableName { get; }
     public int Count => _records.Count;
+    public bool IsLoaded { get; private set; }
 
     public TableData(string tableName)
     {
@@ -291,12 +467,14 @@ public class TableData
         if (string.IsNullOrEmpty(jsonText))
         {
             GD.PrintErr($"[TableData] 加载表失败: {TableName}");
+            IsLoaded = false;
             return;
         }
         var parsed = Json.ParseString(jsonText);
         if (parsed == null || parsed.VariantType != Variant.Type.Dictionary)
         {
             GD.PrintErr($"[TableData] JSON格式无效: {TableName}");
+            IsLoaded = false;
             return;
         }
         var root = new Godot.Collections.Dictionary(parsed);
@@ -330,6 +508,7 @@ public class TableData
         }
 
         BuildIndexes();
+        IsLoaded = true;
         GD.Print($"[TableData] 加载表 {TableName}: {_records.Count} 条记录");
     }
 
@@ -467,6 +646,7 @@ def generate_table_manager_cs(table_names):
     lines.append('    public static TableManager Instance { get; private set; }')
     lines.append('')
     lines.append('    private readonly Dictionary<string, TableData> _tables = new();')
+    lines.append('    private readonly List<string> _loadErrors = new();')
     lines.append('')
 
     for table_name in table_names:
@@ -481,7 +661,17 @@ def generate_table_manager_cs(table_names):
     for table_name in table_names:
         lines.append(f'        {table_name} = LoadTable("{table_name}");')
     lines.append('')
-    lines.append('        GD.Print($"[TableManager] 所有表加载完成, 共 {_tables.Count} 张表");')
+    lines.append('        if (_loadErrors.Count > 0)')
+    lines.append('        {')
+    lines.append('            GD.PrintErr($"[TableManager] {_loadErrors.Count} 张表加载失败!");')
+    lines.append('            foreach (var err in _loadErrors)')
+    lines.append('                GD.PrintErr($"  {err}");')
+    lines.append('            ShowLoadErrorDialog();')
+    lines.append('        }')
+    lines.append('        else')
+    lines.append('        {')
+    lines.append('            GD.Print($"[TableManager] 所有表加载完成, 共 {_tables.Count} 张表");')
+    lines.append('        }')
     lines.append('    }')
     lines.append('')
     lines.append('    private TableData LoadTable(string tableName)')
@@ -489,7 +679,15 @@ def generate_table_manager_cs(table_names):
     lines.append('        var table = new TableData(tableName);')
     lines.append('        table.Load();')
     lines.append('        _tables[tableName] = table;')
+    lines.append('        if (!table.IsLoaded)')
+    lines.append('            _loadErrors.Add($"表 [{tableName}] 加载失败，请检查 res://data/{tableName}.json 是否存在且格式正确");')
     lines.append('        return table;')
+    lines.append('    }')
+    lines.append('')
+    lines.append('    private void ShowLoadErrorDialog()')
+    lines.append('    {')
+    lines.append('        var errorList = string.Join("\\n", _loadErrors);')
+    lines.append('        OS.Alert($"以下数据表加载失败，请重新导表后重启游戏:\\n\\n{errorList}", "数据加载错误");')
     lines.append('    }')
     lines.append('')
     lines.append('    public TableData GetTable(string tableName)')
@@ -529,14 +727,41 @@ def main():
         print("[警告] 未找到任何 xlsx 文件")
         sys.exit(0)
 
-    print(f"\n扫描到 {len(xlsx_files)} 个 xlsx 文件:")
+    enum_files = []
+    data_files = []
     for f in xlsx_files:
+        name = os.path.splitext(os.path.basename(f))[0]
+        if name.startswith('__') and name.endswith('__'):
+            enum_files.append(f)
+        else:
+            data_files.append(f)
+
+    print(f"\n扫描到 {len(data_files)} 个数据表, {len(enum_files)} 个枚举表:")
+    for f in data_files:
         print(f"  - {os.path.relpath(f, ROOT_DIR)}")
+    for f in enum_files:
+        print(f"  - {os.path.relpath(f, ROOT_DIR)} (枚举表)")
+
+    all_errors = []
+    enum_defs = {}
+
+    for xlsx_path in enum_files:
+        file_name = os.path.splitext(os.path.basename(xlsx_path))[0]
+        print(f"\n解析枚举表: {file_name}.xlsx")
+        defs, errors = parse_enum_xlsx(xlsx_path)
+        all_errors.extend(errors)
+        for enum_name, members in defs.items():
+            if enum_name in enum_defs:
+                all_errors.append(f"[错误] 枚举 '{enum_name}' 在多个枚举表中重复定义")
+            else:
+                enum_defs[enum_name] = members
+                member_names = [m['name'] for m in members]
+                print(f"  枚举 {enum_name}: {', '.join(member_names)}")
 
     all_tables = []
     all_enum_values = {}
 
-    for xlsx_path in xlsx_files:
+    for xlsx_path in data_files:
         file_name = os.path.splitext(os.path.basename(xlsx_path))[0]
         print(f"\n处理: {file_name}.xlsx")
 
@@ -561,6 +786,7 @@ def main():
             result = process_sheet(ws, table_name)
             if result:
                 all_tables.append(result)
+                all_errors.extend(result.get('errors', []))
                 for enum_name, values in result['enum_values'].items():
                     if enum_name not in all_enum_values:
                         all_enum_values[enum_name] = set()
@@ -572,6 +798,7 @@ def main():
                 result = process_sheet(ws, table_name)
                 if result:
                     all_tables.append(result)
+                    all_errors.extend(result.get('errors', []))
                     for enum_name, values in result['enum_values'].items():
                         if enum_name not in all_enum_values:
                             all_enum_values[enum_name] = set()
@@ -580,9 +807,36 @@ def main():
 
         wb.close()
 
-    if not all_tables:
-        print("\n[警告] 未找到有效的数据表")
+    for enum_name in enum_defs:
+        if enum_name in all_enum_values:
+            del all_enum_values[enum_name]
+
+    for enum_name in all_enum_values:
+        if enum_name in enum_defs:
+            defined_members = {m['name'] for m in enum_defs[enum_name]}
+            for val in all_enum_values[enum_name]:
+                if val not in defined_members:
+                    all_errors.append(f"[错误] 数据表中使用了枚举 {enum_name} 的成员 '{val}'，但该成员未在 __enum__.xlsx 中定义 (已有: {', '.join(sorted(defined_members))})")
+
+    if all_errors:
+        print(f"\n{'=' * 60}")
+        print(f"发现 {len(all_errors)} 个错误:")
+        for err in all_errors:
+            print(f"  {err}")
+        print(f"\n请修复以上错误后重新导出!")
+        print(f"{'=' * 60}")
+        sys.exit(1)
+
+    if not all_tables and not enum_defs:
+        print("\n[警告] 未找到有效的数据表或枚举定义")
         sys.exit(0)
+
+    for xlsx_path in enum_files:
+        stale_name = os.path.splitext(os.path.basename(xlsx_path))[0]
+        stale_json = os.path.join(JSON_OUTPUT_DIR, f"{stale_name}.json")
+        if os.path.exists(stale_json):
+            os.remove(stale_json)
+            print(f"  [清理] 删除残留文件: {os.path.relpath(stale_json, ROOT_DIR)}")
 
     print(f"\n{'=' * 60}")
     print("导出 JSON 文件:")
@@ -594,14 +848,17 @@ def main():
 
     os.makedirs(CS_OUTPUT_DIR, exist_ok=True)
 
-    if all_enum_values:
-        enum_code = generate_enum_cs(all_enum_values)
+    if enum_defs or all_enum_values:
+        enum_code = generate_enum_cs(enum_defs, all_enum_values)
         enum_path = os.path.join(CS_OUTPUT_DIR, '__enum__.cs')
         with open(enum_path, 'w', encoding='utf-8') as f:
             f.write(enum_code)
         print(f"  [C#] {enum_path}")
+        for enum_name, members in sorted(enum_defs.items()):
+            member_names = [m['name'] for m in members]
+            print(f"        枚举 {enum_name}: {', '.join(member_names)} (显式定义)")
         for enum_name, values in sorted(all_enum_values.items()):
-            print(f"        枚举 {enum_name}: {', '.join(sorted(values))}")
+            print(f"        枚举 {enum_name}: {', '.join(sorted(values))} (自动推断)")
 
     record_code = generate_table_record_cs()
     record_path = os.path.join(CS_OUTPUT_DIR, 'TableRecord.cs')
@@ -623,7 +880,7 @@ def main():
     print(f"  [C#] {manager_path}")
 
     print(f"\n{'=' * 60}")
-    print(f"导出完成! 共处理 {len(all_tables)} 张表, {len(all_enum_values)} 个枚举")
+    print(f"导出完成! 共处理 {len(all_tables)} 张表, {len(enum_defs)} 个显式枚举, {len(all_enum_values)} 个自动推断枚举")
     print(f"JSON 输出: {os.path.relpath(JSON_OUTPUT_DIR, ROOT_DIR)}/")
     print(f"C# 输出:   {os.path.relpath(CS_OUTPUT_DIR, ROOT_DIR)}/")
     print(f"  固定文件: __enum__.cs + TableRecord.cs + TableData.cs + TableManager.cs")
@@ -631,4 +888,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except SystemExit:
+        pass
+    finally:
+        if getattr(sys, 'frozen', False):
+            input("\n按任意键关闭...")

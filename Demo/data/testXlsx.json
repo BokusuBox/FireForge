@@ -1,0 +1,37 @@
+{
+  "tableName": "testXlsx",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int",
+      "comment": "id"
+    },
+    {
+      "name": "weapon_name",
+      "type": "string",
+      "comment": "武器名称"
+    },
+    {
+      "name": "weapon_type",
+      "type": "WeaponType",
+      "comment": "武器类型"
+    },
+    {
+      "name": "skill_pool",
+      "type": "(list#sep=|),int",
+      "comment": "技能池列表"
+    }
+  ],
+  "data": [
+    {
+      "id": 2,
+      "weapon_name": "仪式匕首",
+      "weapon_type": "Dagger",
+      "skill_pool": [
+        111,
+        112,
+        113
+      ]
+    }
+  ]
+}

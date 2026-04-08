@@ -4,7 +4,7 @@
 
 ## 一、 代码质量与开发声明 (Code Quality Declaration)
 你所输出的所有代码和架构设计，必须符合工业级标准及 Godot 引擎的最佳实践：
-1. **规范性**：严格遵循 GDScript 代码规范（变量/函数使用 `snake_case`，类/节点使用 `PascalCase`）。
+1. **规范性**：严格遵循 C# 代码规范（类/方法/属性使用 `PascalCase`，局部变量/参数使用 `camelCase`，私有字段使用 `_camelCase`），遵循 Godot C# 绑定的命名约定。
 2. **解耦与模块化**：严禁写“面条代码”。必须合理利用 Godot 的信号 (Signals)、分组 (Groups) 和状态机，保持场景与脚本的高内聚、低耦合。
 3. **健壮性**：所有节点获取、类型转换和外部输入都必须进行 null 检查和有效性验证，避免抛出异常。
 4. **可读性**：复杂逻辑、数学计算和特定业务机制必须配有清晰的中文注释，说明“为什么这么做”而非仅仅是“做了什么”。
@@ -31,7 +31,7 @@
 由于 Godot 序列化文件的敏感性，你在处理节点和场景时必须遵守以下红线：
 1. **禁止直接修改场景/资源文件**：除非我明确授权，否则你**绝对不可**尝试生成或直接修改 `.tscn`、`.tres` 或 `project.godot` 文件。
 2. **场景搭建指导**：当需求涉及添加新节点、设置节点层级或修改 Inspector 面板中的属性时，你必须提供明确的**编辑器 UI 操作步骤**（例如：“在 Scene 面板添加一个 RigidBody2D，并将其子节点 CollisionShape2D 的 Shape 设为 Circle”），而不是尝试通过代码生成这些结构。
-3. **脚本与节点绑定**：你只负责输出 `.gd` 脚本代码。在代码顶部，必须通过注释明确标出该脚本应当挂载到什么类型的节点上（例如：`# 挂载于: CharacterBody3D`）。
+3. **脚本与节点绑定**：你只负责输出 `.cs` C# 脚本代码。在代码顶部，必须通过注释明确标出该脚本应当挂载到什么类型的节点上（例如：`// 挂载于: CharacterBody2D`）。
 
 ## 六、 调试与排错工作流 (Debugging & Troubleshooting Standards)
 在处理 Bug 和报错时，严禁基于猜测进行“盲改”：
@@ -46,11 +46,11 @@
 ## 八、 2D 物理、渲染与性能约束 (2D Physics, Rendering & Performance Limits)
 作为 Godot 2D 项目的协作者，你在提供架构方案和脚本时，必须严格遵守以下底层逻辑红线：
 
-1. **严格的物理生命周期**：所有涉及物理引擎的操作（如 `CharacterBody2D` 的移动、`RigidBody2D` 的受力、射线检测 `RayCast2D` 的强制更新），**必须且只能**在 `_physics_process(delta)` 中执行。严禁将物理逻辑写在 `_process(delta)` 中导致帧率依赖和卡顿。
+1. **严格的物理生命周期**：所有涉及物理引擎的操作（如 `CharacterBody2D` 的移动、`RigidBody2D` 的受力、射线检测 `RayCast2D` 的强制更新），**必须且只能**在 `_PhysicsProcess(double delta)` 中执行。严禁将物理逻辑写在 `_Process(double delta)` 中导致帧率依赖和卡顿。
 2. **精确的 2D 节点选型**：不要滥用物理节点。
-   - 玩家/复杂逻辑敌人必须使用 `CharacterBody2D`，并通过 `move_and_slide()` 处理位移。
+   - 玩家/复杂逻辑敌人必须使用 `CharacterBody2D`，并通过 `MoveAndSlide()` 处理位移。
    - 纯物理驱动物件使用 `RigidBody2D`。
    - 仅用于检测重叠/触发器的区域，必须使用 `Area2D`。
-3. **事件驱动与反轮询 (Anti-Polling)**：绝对禁止在 `_process` 中高频轮询节点状态（例如每帧检查玩家血量是否为 0）。必须使用 Godot 的**信号 (Signals)** 机制进行事件驱动。禁止在循环或 `_process` 中调用高开销的 `get_node()` 或 `find_child()`，必须在 `_ready()` 中缓存节点引用，或使用 `@onready` 关键字。
+3. **事件驱动与反轮询 (Anti-Polling)**：绝对禁止在 `_Process` 中高频轮询节点状态（例如每帧检查玩家血量是否为 0）。必须使用 Godot 的**信号 (Signals)** 机制进行事件驱动（C# 中通过 `[Signal]` 特性声明，`Connect()` 连接）。禁止在循环或 `_Process` 中调用高开销的 `GetNode()` 或 `FindChild()`，必须在 `_Ready()` 中缓存节点引用，或使用 `[Export]` + `[OnReady]` 关键字。
 4. **UI 与世界坐标严格隔离**：在处理 HUD 和 UI（如血条、背包、暂停菜单）时，必须将其独立置于 `CanvasLayer` 节点之下，并严格使用 `Control` 类节点（如 `VBoxContainer`, `Label`）搭配锚点（Anchors）布局。绝不可将 UI 逻辑直接绑定到 `Node2D` 游戏世界坐标系中进行手动位移计算。
-5. **内存管理与实例清理**：对于高频生成的 2D 实体（如子弹、粒子特效、飘字），必须确保其离开屏幕时（可配合 `VisibleOnScreenNotifier2D`）或生命周期结束时调用 `queue_free()` 安全销毁。如果是弹幕类高密集生成需求，你必须主动提供**对象池 (Object Pool)** 的设计方案。
+5. **内存管理与实例清理**：对于高频生成的 2D 实体（如子弹、粒子特效、飘字），必须确保其离开屏幕时（可配合 `VisibleOnScreenNotifier2D`）或生命周期结束时调用 `QueueFree()` 安全销毁。如果是弹幕类高密集生成需求，你必须主动提供**对象池 (Object Pool)** 的设计方案。

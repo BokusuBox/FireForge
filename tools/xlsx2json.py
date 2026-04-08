@@ -23,6 +23,19 @@ import json
 import re
 import sys
 import keyword
+import ctypes
+
+_RED = '\033[91m'
+_YELLOW = '\033[93m'
+_GREEN = '\033[92m'
+_RESET = '\033[0m'
+
+if sys.platform == 'win32':
+    kernel32 = ctypes.windll.kernel32
+    kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+
+def _c(text, color):
+    return f"{color}{text}{_RESET}"
 
 CS_KEYWORDS = set(keyword.kwlist) | {
     'abstract', 'as', 'base', 'bool', 'break', 'byte', 'case', 'catch', 'char',
@@ -634,74 +647,81 @@ public class TableData
 '''
 
 
-def generate_table_manager_cs(table_names):
-    lines = []
-    lines.append('// 自动生成的代码 - 请勿手动修改')
-    lines.append('')
-    lines.append('using Godot;')
-    lines.append('using System.Collections.Generic;')
-    lines.append('')
-    lines.append('public partial class TableManager : Node')
-    lines.append('{')
-    lines.append('    public static TableManager Instance { get; private set; }')
-    lines.append('')
-    lines.append('    private readonly Dictionary<string, TableData> _tables = new();')
-    lines.append('    private readonly List<string> _loadErrors = new();')
-    lines.append('')
+def generate_table_manager_cs():
+    return '''// 自动生成的代码 - 请勿手动修改
 
-    for table_name in table_names:
-        lines.append(f'    public TableData {table_name} {{ get; private set; }}')
-    lines.append('')
+using Godot;
+using System.Collections.Generic;
 
-    lines.append('    public override void _Ready()')
-    lines.append('    {')
-    lines.append('        Instance = this;')
-    lines.append('')
+public partial class TableManager : Node
+{
+    public static TableManager Instance { get; private set; }
 
-    for table_name in table_names:
-        lines.append(f'        {table_name} = LoadTable("{table_name}");')
-    lines.append('')
-    lines.append('        if (_loadErrors.Count > 0)')
-    lines.append('        {')
-    lines.append('            GD.PrintErr($"[TableManager] {_loadErrors.Count} 张表加载失败!");')
-    lines.append('            foreach (var err in _loadErrors)')
-    lines.append('                GD.PrintErr($"  {err}");')
-    lines.append('            ShowLoadErrorDialog();')
-    lines.append('        }')
-    lines.append('        else')
-    lines.append('        {')
-    lines.append('            GD.Print($"[TableManager] 所有表加载完成, 共 {_tables.Count} 张表");')
-    lines.append('        }')
-    lines.append('    }')
-    lines.append('')
-    lines.append('    private TableData LoadTable(string tableName)')
-    lines.append('    {')
-    lines.append('        var table = new TableData(tableName);')
-    lines.append('        table.Load();')
-    lines.append('        _tables[tableName] = table;')
-    lines.append('        if (!table.IsLoaded)')
-    lines.append('            _loadErrors.Add($"表 [{tableName}] 加载失败，请检查 res://data/{tableName}.json 是否存在且格式正确");')
-    lines.append('        return table;')
-    lines.append('    }')
-    lines.append('')
-    lines.append('    private void ShowLoadErrorDialog()')
-    lines.append('    {')
-    lines.append('        var errorList = string.Join("\\n", _loadErrors);')
-    lines.append('        OS.Alert($"以下数据表加载失败，请重新导表后重启游戏:\\n\\n{errorList}", "数据加载错误");')
-    lines.append('    }')
-    lines.append('')
-    lines.append('    public TableData GetTable(string tableName)')
-    lines.append('    {')
-    lines.append('        if (_tables.TryGetValue(tableName, out var table))')
-    lines.append('            return table;')
-    lines.append('        GD.PrintErr($"[TableManager] 表不存在: {tableName}");')
-    lines.append('        return null;')
-    lines.append('    }')
-    lines.append('')
-    lines.append('}')
-    lines.append('')
+    private readonly Dictionary<string, TableData> _tables = new();
+    private readonly List<string> _loadErrors = new();
 
-    return '\n'.join(lines)
+    public override void _Ready()
+    {
+        Instance = this;
+        LoadAllTables();
+
+        if (_loadErrors.Count > 0)
+        {
+            GD.PrintErr($"[TableManager] {_loadErrors.Count} 张表加载失败!");
+            foreach (var err in _loadErrors)
+                GD.PrintErr($"  {err}");
+            ShowLoadErrorDialog();
+        }
+        else
+        {
+            GD.Print($"[TableManager] 所有表加载完成, 共 {_tables.Count} 张表");
+        }
+    }
+
+    private void LoadAllTables()
+    {
+        var dir = DirAccess.Open("res://data/");
+        if (dir == null)
+        {
+            GD.PrintErr("[TableManager] 无法打开 res://data/ 目录");
+            OS.Alert("无法打开数据目录 res://data/，请检查游戏安装是否完整", "数据加载错误");
+            return;
+        }
+
+        dir.ListDirBegin();
+        var fileName = dir.GetNext();
+        while (fileName != string.Empty)
+        {
+            if (fileName.EndsWith(".json"))
+            {
+                var tableName = fileName.Substring(0, fileName.Length - 5);
+                var table = new TableData(tableName);
+                table.Load();
+                _tables[tableName] = table;
+                if (!table.IsLoaded)
+                    _loadErrors.Add($"表 [{tableName}] 加载失败，请检查 res://data/{fileName} 是否存在且格式正确");
+            }
+            fileName = dir.GetNext();
+        }
+        dir.ListDirEnd();
+    }
+
+    private void ShowLoadErrorDialog()
+    {
+        var errorList = string.Join("\\n", _loadErrors);
+        OS.Alert($"以下数据表加载失败，请重新导表后重启游戏:\\n\\n{errorList}", "数据加载错误");
+    }
+
+    public TableData GetTable(string tableName)
+    {
+        if (_tables.TryGetValue(tableName, out var table))
+            return table;
+        GD.PrintErr($"[TableManager] 表不存在: {tableName}");
+        return null;
+    }
+
+}
+'''
 
 
 def scan_xlsx_files(data_dir):
@@ -719,12 +739,12 @@ def main():
     print("=" * 60)
 
     if not os.path.exists(DATA_DIR):
-        print(f"[错误] 数据目录不存在: {DATA_DIR}")
+        print(_c(f"[错误] 数据目录不存在: {DATA_DIR}", _RED))
         sys.exit(1)
 
     xlsx_files = scan_xlsx_files(DATA_DIR)
     if not xlsx_files:
-        print("[警告] 未找到任何 xlsx 文件")
+        print(_c("[警告] 未找到任何 xlsx 文件", _YELLOW))
         sys.exit(0)
 
     enum_files = []
@@ -768,7 +788,7 @@ def main():
         try:
             wb = load_workbook(xlsx_path, read_only=True, data_only=True)
         except Exception as e:
-            print(f"  [错误] 无法打开文件: {e}")
+            print(_c(f"  [错误] 无法打开文件: {e}", _RED))
             continue
 
         data_sheets = []
@@ -820,15 +840,15 @@ def main():
 
     if all_errors:
         print(f"\n{'=' * 60}")
-        print(f"发现 {len(all_errors)} 个错误:")
+        print(_c(f"发现 {len(all_errors)} 个错误:", _RED))
         for err in all_errors:
-            print(f"  {err}")
-        print(f"\n请修复以上错误后重新导出!")
+            print(_c(f"  {err}", _RED))
+        print(_c(f"\n请修复以上错误后重新导出!", _RED))
         print(f"{'=' * 60}")
         sys.exit(1)
 
     if not all_tables and not enum_defs:
-        print("\n[警告] 未找到有效的数据表或枚举定义")
+        print(_c("\n[警告] 未找到有效的数据表或枚举定义", _YELLOW))
         sys.exit(0)
 
     for xlsx_path in enum_files:
@@ -872,15 +892,14 @@ def main():
         f.write(table_code)
     print(f"  [C#] {table_path}")
 
-    table_names = [t['tableName'] for t in all_tables]
-    manager_code = generate_table_manager_cs(table_names)
+    manager_code = generate_table_manager_cs()
     manager_path = os.path.join(CS_OUTPUT_DIR, 'TableManager.cs')
     with open(manager_path, 'w', encoding='utf-8') as f:
         f.write(manager_code)
     print(f"  [C#] {manager_path}")
 
     print(f"\n{'=' * 60}")
-    print(f"导出完成! 共处理 {len(all_tables)} 张表, {len(enum_defs)} 个显式枚举, {len(all_enum_values)} 个自动推断枚举")
+    print(_c(f"导出完成! 共处理 {len(all_tables)} 张表, {len(enum_defs)} 个显式枚举, {len(all_enum_values)} 个自动推断枚举", _GREEN))
     print(f"JSON 输出: {os.path.relpath(JSON_OUTPUT_DIR, ROOT_DIR)}/")
     print(f"C# 输出:   {os.path.relpath(CS_OUTPUT_DIR, ROOT_DIR)}/")
     print(f"  固定文件: __enum__.cs + TableRecord.cs + TableData.cs + TableManager.cs")

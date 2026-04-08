@@ -10,17 +10,10 @@ public partial class TableManager : Node
     private readonly Dictionary<string, TableData> _tables = new();
     private readonly List<string> _loadErrors = new();
 
-    public TableData testXlsx { get; private set; }
-    public TableData testXlsx2 { get; private set; }
-    public TableData testXlsx3 { get; private set; }
-
     public override void _Ready()
     {
         Instance = this;
-
-        testXlsx = LoadTable("testXlsx");
-        testXlsx2 = LoadTable("testXlsx2");
-        testXlsx3 = LoadTable("testXlsx3");
+        LoadAllTables();
 
         if (_loadErrors.Count > 0)
         {
@@ -35,14 +28,32 @@ public partial class TableManager : Node
         }
     }
 
-    private TableData LoadTable(string tableName)
+    private void LoadAllTables()
     {
-        var table = new TableData(tableName);
-        table.Load();
-        _tables[tableName] = table;
-        if (!table.IsLoaded)
-            _loadErrors.Add($"表 [{tableName}] 加载失败，请检查 res://data/{tableName}.json 是否存在且格式正确");
-        return table;
+        var dir = DirAccess.Open("res://data/");
+        if (dir == null)
+        {
+            GD.PrintErr("[TableManager] 无法打开 res://data/ 目录");
+            OS.Alert("无法打开数据目录 res://data/，请检查游戏安装是否完整", "数据加载错误");
+            return;
+        }
+
+        dir.ListDirBegin();
+        var fileName = dir.GetNext();
+        while (fileName != string.Empty)
+        {
+            if (fileName.EndsWith(".json"))
+            {
+                var tableName = fileName.Substring(0, fileName.Length - 5);
+                var table = new TableData(tableName);
+                table.Load();
+                _tables[tableName] = table;
+                if (!table.IsLoaded)
+                    _loadErrors.Add($"表 [{tableName}] 加载失败，请检查 res://data/{fileName} 是否存在且格式正确");
+            }
+            fileName = dir.GetNext();
+        }
+        dir.ListDirEnd();
     }
 
     private void ShowLoadErrorDialog()

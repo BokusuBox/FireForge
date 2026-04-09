@@ -1,0 +1,162 @@
+{
+  "tableName": "archetype",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int",
+      "comment": "模板ID"
+    },
+    {
+      "name": "archetype_name",
+      "type": "string",
+      "comment": "模板名称"
+    },
+    {
+      "name": "dimension",
+      "type": "ArchetypeDimension",
+      "comment": "构筑维度"
+    },
+    {
+      "name": "min_difficulty",
+      "type": "int",
+      "comment": "最低难度"
+    },
+    {
+      "name": "max_difficulty",
+      "type": "int",
+      "comment": "最高难度"
+    },
+    {
+      "name": "base_material_tags",
+      "type": "string",
+      "comment": "底材倾向标签(|分隔)"
+    },
+    {
+      "name": "correct_affix_groups",
+      "type": "string",
+      "comment": "正确答案词缀组ID(|分隔)"
+    },
+    {
+      "name": "squad_pool_id",
+      "type": "int",
+      "comment": "测试队友池ID"
+    },
+    {
+      "name": "scene_anchor",
+      "type": "string",
+      "comment": "场景锚定"
+    },
+    {
+      "name": "enemy_ilvl_scale",
+      "type": "float",
+      "comment": "敌人iLvl缩放系数"
+    },
+    {
+      "name": "default_tier",
+      "type": "int",
+      "comment": "默认算分Tier"
+    },
+    {
+      "name": "base_damage",
+      "type": "int",
+      "comment": "基底伤害"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "comment": "描述"
+    }
+  ],
+  "data": [
+    {
+      "id": 1,
+      "archetype_name": "纯物理输出",
+      "dimension": "PureDamage",
+      "min_difficulty": 1,
+      "max_difficulty": 3,
+      "base_material_tags": "weapon|sword",
+      "correct_affix_groups": "101",
+      "squad_pool_id": 1,
+      "scene_anchor": "arena",
+      "enemy_ilvl_scale": 1.0,
+      "default_tier": 5,
+      "base_damage": 5000,
+      "description": "最基础的物理输出模板"
+    },
+    {
+      "id": 2,
+      "archetype_name": "暴击爆发",
+      "dimension": "CritBurst",
+      "min_difficulty": 2,
+      "max_difficulty": 5,
+      "base_material_tags": "weapon|dagger",
+      "correct_affix_groups": "101|103",
+      "squad_pool_id": 2,
+      "scene_anchor": "arena",
+      "enemy_ilvl_scale": 1.2,
+      "default_tier": 3,
+      "base_damage": 8000,
+      "description": "需要暴击率+暴伤双维叠加"
+    },
+    {
+      "id": 3,
+      "archetype_name": "铁壁肉盾",
+      "dimension": "TankSurvival",
+      "min_difficulty": 1,
+      "max_difficulty": 4,
+      "base_material_tags": "body_armor|helmet",
+      "correct_affix_groups": "102|104",
+      "squad_pool_id": 3,
+      "scene_anchor": "fortress",
+      "enemy_ilvl_scale": 1.5,
+      "default_tier": 3,
+      "base_damage": 3000,
+      "description": "生存抗压模板，敌人伤害递增"
+    },
+    {
+      "id": 4,
+      "archetype_name": "圣光奶妈",
+      "dimension": "SupportHeal",
+      "min_difficulty": 2,
+      "max_difficulty": 6,
+      "base_material_tags": "weapon|staff",
+      "correct_affix_groups": "105|106",
+      "squad_pool_id": 4,
+      "scene_anchor": "endurance",
+      "enemy_ilvl_scale": 1.3,
+      "default_tier": 2,
+      "base_damage": 4000,
+      "description": "辅助治疗模板，队友存活时间=得分"
+    },
+    {
+      "id": 5,
+      "archetype_name": "毒爆蔓延",
+      "dimension": "DotSpread",
+      "min_difficulty": 3,
+      "max_difficulty": 7,
+      "base_material_tags": "weapon|wand",
+      "correct_affix_groups": "107|108",
+      "squad_pool_id": 5,
+      "scene_anchor": "swarm",
+      "enemy_ilvl_scale": 1.8,
+      "default_tier": 1,
+      "base_damage": 6000,
+      "description": "持续伤害+蔓延溅射复合模板"
+    },
+    {
+      "id": 6,
+      "archetype_name": "战法双修",
+      "dimension": "HybridComposite",
+      "min_difficulty": 4,
+      "max_difficulty": 8,
+      "base_material_tags": "weapon|sword|body_armor",
+      "correct_affix_groups": "101|104|105",
+      "squad_pool_id": 6,
+      "scene_anchor": "boss",
+      "enemy_ilvl_scale": 2.0,
+      "default_tier": 1,
+      "base_damage": 10000,
+      "description": "攻防复合终极模板"
+    }
+  ]
+}

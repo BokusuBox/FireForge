@@ -1,0 +1,162 @@
+{
+  "tableName": "adventurer",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int",
+      "comment": "冒险者ID"
+    },
+    {
+      "name": "adventurer_name",
+      "type": "string",
+      "comment": "冒险者名称"
+    },
+    {
+      "name": "role",
+      "type": "AdventurerRole",
+      "comment": "职业"
+    },
+    {
+      "name": "level",
+      "type": "int",
+      "comment": "等级"
+    },
+    {
+      "name": "hp",
+      "type": "int",
+      "comment": "血量"
+    },
+    {
+      "name": "base_attack",
+      "type": "int",
+      "comment": "基础攻击"
+    },
+    {
+      "name": "base_armor",
+      "type": "int",
+      "comment": "基础护甲"
+    },
+    {
+      "name": "attack_speed",
+      "type": "float",
+      "comment": "攻击速度"
+    },
+    {
+      "name": "move_speed",
+      "type": "float",
+      "comment": "移动速度"
+    },
+    {
+      "name": "crit_rate",
+      "type": "float",
+      "comment": "暴击率"
+    },
+    {
+      "name": "crit_dmg_multiplier",
+      "type": "float",
+      "comment": "暴击伤害倍率"
+    },
+    {
+      "name": "cdr",
+      "type": "float",
+      "comment": "冷却缩减"
+    },
+    {
+      "name": "passive_trait",
+      "type": "string",
+      "comment": "独特被动特质"
+    }
+  ],
+  "data": [
+    {
+      "id": 1,
+      "adventurer_name": "铁盾·格雷",
+      "role": "Warrior",
+      "level": 1,
+      "hp": 120,
+      "base_attack": 8,
+      "base_armor": 5,
+      "attack_speed": 0.8,
+      "move_speed": 2.0,
+      "crit_rate": 0.05,
+      "crit_dmg_multiplier": 1.5,
+      "cdr": 0.0,
+      "passive_trait": "坚韧意志"
+    },
+    {
+      "id": 2,
+      "adventurer_name": "疾风·艾拉",
+      "role": "Ranger",
+      "level": 1,
+      "hp": 80,
+      "base_attack": 6,
+      "base_armor": 2,
+      "attack_speed": 1.2,
+      "move_speed": 3.5,
+      "crit_rate": 0.1,
+      "crit_dmg_multiplier": 1.5,
+      "cdr": 0.0,
+      "passive_trait": "先手优势"
+    },
+    {
+      "id": 3,
+      "adventurer_name": "星火·梅林",
+      "role": "Mage",
+      "level": 1,
+      "hp": 70,
+      "base_attack": 3,
+      "base_armor": 1,
+      "attack_speed": 0.6,
+      "move_speed": 2.0,
+      "crit_rate": 0.05,
+      "crit_dmg_multiplier": 2.0,
+      "cdr": 0.1,
+      "passive_trait": "奥术亲和"
+    },
+    {
+      "id": 4,
+      "adventurer_name": "暗牙·洛克",
+      "role": "Rogue",
+      "level": 1,
+      "hp": 90,
+      "base_attack": 7,
+      "base_armor": 2,
+      "attack_speed": 1.4,
+      "move_speed": 3.0,
+      "crit_rate": 0.2,
+      "crit_dmg_multiplier": 2.0,
+      "cdr": 0.0,
+      "passive_trait": "致命一击"
+    },
+    {
+      "id": 5,
+      "adventurer_name": "铁盾·格雷",
+      "role": "Warrior",
+      "level": 5,
+      "hp": 180,
+      "base_attack": 12,
+      "base_armor": 8,
+      "attack_speed": 0.8,
+      "move_speed": 2.0,
+      "crit_rate": 0.05,
+      "crit_dmg_multiplier": 1.5,
+      "cdr": 0.05,
+      "passive_trait": "坚韧意志|破甲反击"
+    },
+    {
+      "id": 6,
+      "adventurer_name": "暗牙·洛克",
+      "role": "Rogue",
+      "level": 5,
+      "hp": 130,
+      "base_attack": 10,
+      "base_armor": 3,
+      "attack_speed": 1.4,
+      "move_speed": 3.5,
+      "crit_rate": 0.25,
+      "crit_dmg_multiplier": 2.5,
+      "cdr": 0.0,
+      "passive_trait": "致命一击|暴伤翻倍"
+    }
+  ]
+}

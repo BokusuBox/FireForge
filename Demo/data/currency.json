@@ -1,0 +1,107 @@
+{
+  "tableName": "currency",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int",
+      "comment": "通货ID"
+    },
+    {
+      "name": "currency_name",
+      "type": "string",
+      "comment": "通货名称"
+    },
+    {
+      "name": "currency_type",
+      "type": "CurrencyType",
+      "comment": "通货类型"
+    },
+    {
+      "name": "ap_cost",
+      "type": "int",
+      "comment": "消耗AP点数"
+    },
+    {
+      "name": "effect_type",
+      "type": "CurrencyEffect",
+      "comment": "效果类型"
+    },
+    {
+      "name": "is_corruption",
+      "type": "bool",
+      "comment": "是否腐化操作"
+    },
+    {
+      "name": "min_workshop_level",
+      "type": "int",
+      "comment": "最低工作室等级"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "comment": "描述"
+    }
+  ],
+  "data": [
+    {
+      "id": 1,
+      "currency_name": "学徒改造锤",
+      "currency_type": "Hammer",
+      "ap_cost": 1,
+      "effect_type": "RerollOne",
+      "is_corruption": false,
+      "min_workshop_level": 1,
+      "description": "耗1AP，重置指定词条(三选一)"
+    },
+    {
+      "id": 2,
+      "currency_name": "定向元素精华",
+      "currency_type": "Essence",
+      "ap_cost": 1,
+      "effect_type": "ForceTag",
+      "is_corruption": false,
+      "min_workshop_level": 2,
+      "description": "耗1AP，强制生成指定标签词条(盲盒)"
+    },
+    {
+      "id": 3,
+      "currency_name": "崇高打孔锥",
+      "currency_type": "Chisel",
+      "ap_cost": 2,
+      "effect_type": "AddSlot",
+      "is_corruption": false,
+      "min_workshop_level": 3,
+      "description": "耗2AP，追加新词条槽位(三选一)"
+    },
+    {
+      "id": 4,
+      "currency_name": "神圣微调砂纸",
+      "currency_type": "Sandpaper",
+      "ap_cost": 1,
+      "effect_type": "RerollValue",
+      "is_corruption": false,
+      "min_workshop_level": 2,
+      "description": "耗1AP，重Roll词条数值大小"
+    },
+    {
+      "id": 5,
+      "currency_name": "混沌重铸钻",
+      "currency_type": "Drill",
+      "ap_cost": 1,
+      "effect_type": "RerollAll",
+      "is_corruption": false,
+      "min_workshop_level": 3,
+      "description": "耗1AP，完全重置全部词条槽位"
+    },
+    {
+      "id": 6,
+      "currency_name": "虚空魔核",
+      "currency_type": "VoidCore",
+      "ap_cost": 0,
+      "effect_type": "Corrupt",
+      "is_corruption": true,
+      "min_workshop_level": 4,
+      "description": "0AP超限使用，不可逆腐化变异"
+    }
+  ]
+}

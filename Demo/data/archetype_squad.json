@@ -1,0 +1,102 @@
+{
+  "tableName": "archetype_squad",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int",
+      "comment": "记录ID"
+    },
+    {
+      "name": "squad_pool_id",
+      "type": "int",
+      "comment": "队友池ID"
+    },
+    {
+      "name": "adventurer_id",
+      "type": "int",
+      "comment": "冒险者ID"
+    },
+    {
+      "name": "role_label",
+      "type": "string",
+      "comment": "定位标签"
+    },
+    {
+      "name": "count",
+      "type": "int",
+      "comment": "数量"
+    }
+  ],
+  "data": [
+    {
+      "id": 1,
+      "squad_pool_id": 1,
+      "adventurer_id": 1,
+      "role_label": "main_dps",
+      "count": 1
+    },
+    {
+      "id": 2,
+      "squad_pool_id": 2,
+      "adventurer_id": 1,
+      "role_label": "main_dps",
+      "count": 1
+    },
+    {
+      "id": 3,
+      "squad_pool_id": 2,
+      "adventurer_id": 4,
+      "role_label": "support",
+      "count": 1
+    },
+    {
+      "id": 4,
+      "squad_pool_id": 3,
+      "adventurer_id": 2,
+      "role_label": "ranger_dps",
+      "count": 2
+    },
+    {
+      "id": 5,
+      "squad_pool_id": 4,
+      "adventurer_id": 3,
+      "role_label": "mage_dps",
+      "count": 2
+    },
+    {
+      "id": 6,
+      "squad_pool_id": 5,
+      "adventurer_id": 1,
+      "role_label": "main_dps",
+      "count": 1
+    },
+    {
+      "id": 7,
+      "squad_pool_id": 5,
+      "adventurer_id": 2,
+      "role_label": "ranger_dps",
+      "count": 1
+    },
+    {
+      "id": 8,
+      "squad_pool_id": 6,
+      "adventurer_id": 1,
+      "role_label": "main_dps",
+      "count": 1
+    },
+    {
+      "id": 9,
+      "squad_pool_id": 6,
+      "adventurer_id": 3,
+      "role_label": "mage_dps",
+      "count": 1
+    },
+    {
+      "id": 10,
+      "squad_pool_id": 6,
+      "adventurer_id": 4,
+      "role_label": "support",
+      "count": 1
+    }
+  ]
+}

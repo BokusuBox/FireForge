@@ -73,21 +73,38 @@
 - [x] 创建 `data/` 目录（xlsx 源文件，按系统分子文件夹）
 - [x] 创建 `demo/data/` 目录（JSON 输出）
 - [x] 创建 `demo/scripts/data/generated/` 目录（C# 自动生成代码）
-- [ ] 创建 `scripts/core/` 目录
-- [ ] 创建 `scripts/crafting/` 目录
-- [ ] 创建 `scripts/combat/` 目录
-- [ ] 创建 `scripts/shop/` 目录
-- [ ] 创建 `scripts/order/` 目录
-- [ ] 创建 `scripts/ui/` 目录
-- [ ] 创建 `resources/` 目录（Godot Resource）
+- [x] 创建 `scripts/core/` 目录
+- [x] 创建 `scripts/crafting/` 目录
+- [x] 创建 `scripts/combat/` 目录
+- [x] 创建 `scripts/shop/` 目录
+- [x] 创建 `scripts/order/` 目录
+- [x] 创建 `scripts/ui/` 目录
+- [x] 创建 `resources/` 目录（Godot Resource）
 
 ### 1.2 核心数据模型定义
-- [ ] `AffixData.cs` - 词缀数据模型（Group/Tier/iLvl门槛/Weight 四维结构）
-- [ ] `EquipmentData.cs` - 装备数据模型（底材名/iLvl/MaxAP/基础白值/前后缀槽位）
-- [ ] `AdventurerData.cs` - 冒险者数据模型（等级/HP/基础攻击/护甲/攻速/移速/暴击/暴伤/CDR/被动特质）
-- [ ] `OrderData.cs` - 订单数据模型（顾客引用/需求描述/目标技能阈值/考核分数/赏金）
-- [ ] `CurrencyData.cs` - 通货数据模型（名称/AP消耗/效果类型枚举）
-- [ ] `SkillData.cs` - 技能数据模型（技能名/等级/阈值坎/效果描述）
+- [x] `AffixData.cs` - 词缀数据模型（Group/Tier/iLvl门槛/Weight 四维结构）+ `affix.xlsx` 配表
+- [x] `EquipmentData.cs` - 装备数据模型（底材名/iLvl/MaxAP/基础白值/前后缀槽位）+ `equipment.xlsx` 配表
+- [x] `AdventurerData.cs` - 冒险者数据模型（等级/HP/基础攻击/护甲/攻速/移速/暴击/暴伤/CDR/被动特质）+ `adventurer.xlsx` 配表
+- [x] `OrderData.cs` + `ArchetypeData.cs` - 订单数据模型 + 流派模板库（3表拆分：archetype/archetype_squad/order）+ `order.xlsx` 配表
+- [x] `CurrencyData.cs` - 通货数据模型（名称/AP消耗/效果类型枚举/工作室等级闸门）+ `currency.xlsx` 配表
+- [x] `SkillData.cs` - 技能数据模型（技能名/类型/触发条件/阈值坎/冷却）+ `skill.xlsx` 配表
+- [ ] `TraitData.cs` - 被动特质数据模型（触发条件+效果类型分离，当前adventurer.passive_trait为string占位）
+  - 预设表结构：id / trait_name / trigger_type(枚举: always/on_crit/on_low_hp/on_kill等) / effect_type(枚举: damage_multiplier/armor_bonus/heal/shield等) / effect_value / description
+  - 战斗系统按 trigger_type 分发触发时机，按 effect_type 分发效果逻辑
+  - adventurer.xlsx 的 passive_trait 字段后续改为 `(list#sep=|),int` 引用特质ID
+
+#### ⚠️ 暂代字段清单（后续需替换/完善）
+
+| 所属模型 | 字段 | 当前类型 | 暂代原因 | 后续方案 |
+|----------|------|----------|----------|----------|
+| AdventurerData | `PassiveTraits` | `List<string>` | 特质系统未建表，仅存名称字符串 | 建 trait.xlsx 后改为 `List<int>` 引用特质ID |
+| ArchetypeData | `BaseMaterialTags` | `List<string>` | 标签系统未建枚举，仅存自由文本标签 | 后续建 MaterialTag 枚举或引用底材标签表 |
+| ArchetypeData | `CorrectAffixGroups` | `List<int>` | 引用词缀组ID，但组ID格式为101/102等，与affix表group_id字段对齐待验证 | 锻造引擎开发时验证关联查询 |
+| ArchetypeData | `SceneAnchor` | `string` | 场景/地下城配置系统未建表，仅存场景锚定标识 | 后续建 dungeon.xlsx 场景配置表后改为 int 引用 |
+| ArchetypeData | `CalculateTargetScore()` | 运行时方法 | 公式系数(Tier乘区0.3步进/iLvl缩放)为初版估算 | 战斗系统数值平衡时调参 |
+| ArchetypeSquad | `role_label` | `string` | 队友定位标签未枚举化 | 后续建 SquadRole 枚举 |
+| SkillData | `ThresholdLevels` | `List<int>` (从string解析) | 阈值坎效果描述仅在description字段文字说明 | 后续建 skill_threshold.xlsx 拆分每个坎的具体效果数值 |
+| SkillData | `Description` | `string` | 技能效果描述为纯文本，战斗系统无法直接解析 | 后续拆分为结构化效果字段 |
 
 ### 1.3 词缀库引擎
 - [ ] `AffixDb.cs` - 词缀数据库加载器（从 JSON 读取并缓存）

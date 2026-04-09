@@ -1,0 +1,151 @@
+{
+  "tableName": "order",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int",
+      "comment": "订单ID"
+    },
+    {
+      "name": "order_name",
+      "type": "string",
+      "comment": "订单名称"
+    },
+    {
+      "name": "order_type",
+      "type": "OrderType",
+      "comment": "订单类型"
+    },
+    {
+      "name": "difficulty",
+      "type": "OrderDifficulty",
+      "comment": "难度"
+    },
+    {
+      "name": "min_reputation",
+      "type": "int",
+      "comment": "最低声望要求"
+    },
+    {
+      "name": "archetype_id",
+      "type": "int",
+      "comment": "流派模板ID(关联archetype表)"
+    },
+    {
+      "name": "variant",
+      "type": "OrderVariant",
+      "comment": "包装变体类型"
+    },
+    {
+      "name": "adventurer_id",
+      "type": "int",
+      "comment": "顾客冒险者ID"
+    },
+    {
+      "name": "equipment_count",
+      "type": "int",
+      "comment": "需求装备件数(零钱算法分配)"
+    },
+    {
+      "name": "reward_gold",
+      "type": "int",
+      "comment": "基础赏金(金币)"
+    },
+    {
+      "name": "reward_reputation",
+      "type": "int",
+      "comment": "声望奖励"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "comment": "需求描述"
+    }
+  ],
+  "data": [
+    {
+      "id": 1,
+      "order_name": "新手试炼",
+      "order_type": "WalkIn",
+      "difficulty": "Easy",
+      "min_reputation": 0,
+      "archetype_id": 1,
+      "variant": "SingleMissing",
+      "adventurer_id": 1,
+      "equipment_count": 1,
+      "reward_gold": 100,
+      "reward_reputation": 1,
+      "description": "为铁盾·格雷补齐武器，触发物理输出阈值"
+    },
+    {
+      "id": 2,
+      "order_name": "护甲强化",
+      "order_type": "WalkIn",
+      "difficulty": "Easy",
+      "min_reputation": 0,
+      "archetype_id": 3,
+      "variant": "SingleMissing",
+      "adventurer_id": 4,
+      "equipment_count": 1,
+      "reward_gold": 120,
+      "reward_reputation": 1,
+      "description": "为学徒皮甲添加护甲词缀"
+    },
+    {
+      "id": 3,
+      "order_name": "暴击之路",
+      "order_type": "WalkIn",
+      "difficulty": "Normal",
+      "min_reputation": 1,
+      "archetype_id": 2,
+      "variant": "FullSet",
+      "adventurer_id": 4,
+      "equipment_count": 2,
+      "reward_gold": 200,
+      "reward_reputation": 2,
+      "description": "为暗牙·洛克凑齐暴击阈值套组"
+    },
+    {
+      "id": 4,
+      "order_name": "法师武装",
+      "order_type": "WalkIn",
+      "difficulty": "Normal",
+      "min_reputation": 2,
+      "archetype_id": 4,
+      "variant": "SquadDrill",
+      "adventurer_id": 3,
+      "equipment_count": 2,
+      "reward_gold": 250,
+      "reward_reputation": 2,
+      "description": "为星火·梅林打造法系武器，标准队友陪练"
+    },
+    {
+      "id": 5,
+      "order_name": "冰川防线",
+      "order_type": "Regional",
+      "difficulty": "Hard",
+      "min_reputation": 3,
+      "archetype_id": 3,
+      "variant": "Commission",
+      "adventurer_id": 5,
+      "equipment_count": 3,
+      "reward_gold": 500,
+      "reward_reputation": 3,
+      "description": "代工单：锁底材，仅发够用通货"
+    },
+    {
+      "id": 6,
+      "order_name": "深渊试炼",
+      "order_type": "Guild",
+      "difficulty": "Extreme",
+      "min_reputation": 5,
+      "archetype_id": 6,
+      "variant": "FullSet",
+      "adventurer_id": 5,
+      "equipment_count": 4,
+      "reward_gold": 1000,
+      "reward_reputation": 5,
+      "description": "公会终极考核：战法双修多件套"
+    }
+  ]
+}

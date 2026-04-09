@@ -5,173 +5,491 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-public class TestXlsxRow
+public class AdventurerRow
 {
     private readonly TableRecord _raw;
-    public TestXlsxRow(TableRecord raw) { _raw = raw; }
+    public AdventurerRow(TableRecord raw) { _raw = raw; }
 
     public int Id => _raw.GetInt("id");
-    public string WeaponName => _raw.GetString("weapon_name");
-    public WeaponType WeaponType => _raw.GetEnum<WeaponType>("weapon_type");
+    public string AdventurerName => _raw.GetString("adventurer_name");
+    public AdventurerRole Role => _raw.GetEnum<AdventurerRole>("role");
+    public int Level => _raw.GetInt("level");
+    public int Hp => _raw.GetInt("hp");
+    public int BaseAttack => _raw.GetInt("base_attack");
+    public int BaseArmor => _raw.GetInt("base_armor");
+    public float AttackSpeed => _raw.GetFloat("attack_speed");
+    public float MoveSpeed => _raw.GetFloat("move_speed");
+    public float CritRate => _raw.GetFloat("crit_rate");
+    public float CritDmgMultiplier => _raw.GetFloat("crit_dmg_multiplier");
+    public float Cdr => _raw.GetFloat("cdr");
+    public string PassiveTrait => _raw.GetString("passive_trait");
+}
+
+public class ArchetypeRow
+{
+    private readonly TableRecord _raw;
+    public ArchetypeRow(TableRecord raw) { _raw = raw; }
+
+    public int Id => _raw.GetInt("id");
+    public string ArchetypeName => _raw.GetString("archetype_name");
+    public ArchetypeDimension Dimension => _raw.GetEnum<ArchetypeDimension>("dimension");
+    public int MinDifficulty => _raw.GetInt("min_difficulty");
+    public int MaxDifficulty => _raw.GetInt("max_difficulty");
+    public string BaseMaterialTags => _raw.GetString("base_material_tags");
+    public string CorrectAffixGroups => _raw.GetString("correct_affix_groups");
+    public int SquadPoolId => _raw.GetInt("squad_pool_id");
+    public string SceneAnchor => _raw.GetString("scene_anchor");
+    public float EnemyIlvlScale => _raw.GetFloat("enemy_ilvl_scale");
+    public int DefaultTier => _raw.GetInt("default_tier");
+    public int BaseDamage => _raw.GetInt("base_damage");
+    public string Description => _raw.GetString("description");
+}
+
+public class ArchetypeSquadRow
+{
+    private readonly TableRecord _raw;
+    public ArchetypeSquadRow(TableRecord raw) { _raw = raw; }
+
+    public int Id => _raw.GetInt("id");
+    public int SquadPoolId => _raw.GetInt("squad_pool_id");
+    public int AdventurerId => _raw.GetInt("adventurer_id");
+    public string RoleLabel => _raw.GetString("role_label");
+    public int Count => _raw.GetInt("count");
+}
+
+public class CurrencyRow
+{
+    private readonly TableRecord _raw;
+    public CurrencyRow(TableRecord raw) { _raw = raw; }
+
+    public int Id => _raw.GetInt("id");
+    public string CurrencyName => _raw.GetString("currency_name");
+    public CurrencyType CurrencyType => _raw.GetEnum<CurrencyType>("currency_type");
+    public int ApCost => _raw.GetInt("ap_cost");
+    public CurrencyEffect EffectType => _raw.GetEnum<CurrencyEffect>("effect_type");
+    public bool IsCorruption => _raw.GetBool("is_corruption");
+    public int MinWorkshopLevel => _raw.GetInt("min_workshop_level");
+    public string Description => _raw.GetString("description");
+}
+
+public class AffixRow
+{
+    private readonly TableRecord _raw;
+    public AffixRow(TableRecord raw) { _raw = raw; }
+
+    public int Id => _raw.GetInt("id");
+    public int GroupId => _raw.GetInt("group_id");
+    public string GroupName => _raw.GetString("group_name");
+    public AffixSlotType SlotType => _raw.GetEnum<AffixSlotType>("slot_type");
+    public int Tier => _raw.GetInt("tier");
+    public int RequiredILvl => _raw.GetInt("required_i_lvl");
+    public int Weight => _raw.GetInt("weight");
+    public string StatModifiers => _raw.GetString("stat_modifiers");
+    public string Tag => _raw.GetString("tag");
+}
+
+public class EquipmentRow
+{
+    private readonly TableRecord _raw;
+    public EquipmentRow(TableRecord raw) { _raw = raw; }
+
+    public int Id => _raw.GetInt("id");
+    public string EquipmentName => _raw.GetString("equipment_name");
+    public EquipmentSlot Slot => _raw.GetEnum<EquipmentSlot>("slot");
+    public EquipmentRarity Rarity => _raw.GetEnum<EquipmentRarity>("rarity");
+    public int ILvl => _raw.GetInt("i_lvl");
+    public int MaxAp => _raw.GetInt("max_ap");
+    public int BaseAttack => _raw.GetInt("base_attack");
+    public int BaseArmor => _raw.GetInt("base_armor");
+    public int PrefixSlots => _raw.GetInt("prefix_slots");
+    public int SuffixSlots => _raw.GetInt("suffix_slots");
     public List<int> SkillPool => _raw.GetIntList("skill_pool");
 }
 
-public class TestXlsx2Row
+public class OrderRow
 {
     private readonly TableRecord _raw;
-    public TestXlsx2Row(TableRecord raw) { _raw = raw; }
+    public OrderRow(TableRecord raw) { _raw = raw; }
 
     public int Id => _raw.GetInt("id");
-    public string WeaponName => _raw.GetString("weapon_name");
-    public List<WeaponType> WeaponType => _raw.GetStringList("weapon_type").ConvertAll(s => Enum.Parse<WeaponType>(s));
-    public int SkillPool => _raw.GetInt("skill_pool");
+    public string OrderName => _raw.GetString("order_name");
+    public OrderType OrderType => _raw.GetEnum<OrderType>("order_type");
+    public OrderDifficulty Difficulty => _raw.GetEnum<OrderDifficulty>("difficulty");
+    public int MinReputation => _raw.GetInt("min_reputation");
+    public int ArchetypeId => _raw.GetInt("archetype_id");
+    public OrderVariant Variant => _raw.GetEnum<OrderVariant>("variant");
+    public int AdventurerId => _raw.GetInt("adventurer_id");
+    public int EquipmentCount => _raw.GetInt("equipment_count");
+    public int RewardGold => _raw.GetInt("reward_gold");
+    public int RewardReputation => _raw.GetInt("reward_reputation");
+    public string Description => _raw.GetString("description");
 }
 
-public class TestXlsx3Row
+public class SkillRow
 {
     private readonly TableRecord _raw;
-    public TestXlsx3Row(TableRecord raw) { _raw = raw; }
+    public SkillRow(TableRecord raw) { _raw = raw; }
 
     public int Id => _raw.GetInt("id");
-    public string WeaponName => _raw.GetString("weapon_name");
-    public List<WeaponType> WeaponType => _raw.GetStringList("weapon_type").ConvertAll(s => Enum.Parse<WeaponType>(s));
-    public int SkillPool => _raw.GetInt("skill_pool");
-    public ItemCost ItemCost => _raw.GetBean<ItemCost>("item_cost");
-    public List<ItemAward> ItemAward => _raw.GetBeanList<ItemAward>("item_award");
-    public List<ItemTest> ItemTest => _raw.GetBeanList<ItemTest>("item_test");
+    public string SkillName => _raw.GetString("skill_name");
+    public SkillType SkillType => _raw.GetEnum<SkillType>("skill_type");
+    public SkillTrigger Trigger => _raw.GetEnum<SkillTrigger>("trigger");
+    public string ThresholdLevels => _raw.GetString("threshold_levels");
+    public float BaseCooldown => _raw.GetFloat("base_cooldown");
+    public string Description => _raw.GetString("description");
 }
 
-public class TestXlsxTable
+public class AdventurerTable
 {
     private readonly TableData _raw;
-    private List<TestXlsxRow> _rows;
+    private List<AdventurerRow> _rows;
 
-    public TestXlsxTable(TableData raw) { _raw = raw; }
+    public AdventurerTable(TableData raw) { _raw = raw; }
     public int Count => _raw.Count;
 
-    public List<TestXlsxRow> GetAll()
+    public List<AdventurerRow> GetAll()
     {
         if (_rows == null)
-            _rows = _raw.GetAll().ConvertAll(r => new TestXlsxRow(r));
+            _rows = _raw.GetAll().ConvertAll(r => new AdventurerRow(r));
         return _rows;
     }
 
-    public TestXlsxRow FindById(int id)
+    public AdventurerRow FindById(int id)
     {
         var record = _raw.Find("id", id);
-        return record != null ? new TestXlsxRow(record) : null;
+        return record != null ? new AdventurerRow(record) : null;
     }
 
-    public TestXlsxRow Find(string fieldName, object value)
+    public AdventurerRow Find(string fieldName, object value)
     {
         var record = _raw.Find(fieldName, value);
-        return record != null ? new TestXlsxRow(record) : null;
+        return record != null ? new AdventurerRow(record) : null;
     }
 
-    public List<TestXlsxRow> FindAll(string fieldName, object value)
+    public List<AdventurerRow> FindAll(string fieldName, object value)
     {
-        return _raw.FindAll(fieldName, value).ConvertAll(r => new TestXlsxRow(r));
+        return _raw.FindAll(fieldName, value).ConvertAll(r => new AdventurerRow(r));
     }
 }
 
-public class TestXlsx2Table
+public class ArchetypeTable
 {
     private readonly TableData _raw;
-    private List<TestXlsx2Row> _rows;
+    private List<ArchetypeRow> _rows;
 
-    public TestXlsx2Table(TableData raw) { _raw = raw; }
+    public ArchetypeTable(TableData raw) { _raw = raw; }
     public int Count => _raw.Count;
 
-    public List<TestXlsx2Row> GetAll()
+    public List<ArchetypeRow> GetAll()
     {
         if (_rows == null)
-            _rows = _raw.GetAll().ConvertAll(r => new TestXlsx2Row(r));
+            _rows = _raw.GetAll().ConvertAll(r => new ArchetypeRow(r));
         return _rows;
     }
 
-    public TestXlsx2Row FindById(int id)
+    public ArchetypeRow FindById(int id)
     {
         var record = _raw.Find("id", id);
-        return record != null ? new TestXlsx2Row(record) : null;
+        return record != null ? new ArchetypeRow(record) : null;
     }
 
-    public TestXlsx2Row Find(string fieldName, object value)
+    public ArchetypeRow Find(string fieldName, object value)
     {
         var record = _raw.Find(fieldName, value);
-        return record != null ? new TestXlsx2Row(record) : null;
+        return record != null ? new ArchetypeRow(record) : null;
     }
 
-    public List<TestXlsx2Row> FindAll(string fieldName, object value)
+    public List<ArchetypeRow> FindAll(string fieldName, object value)
     {
-        return _raw.FindAll(fieldName, value).ConvertAll(r => new TestXlsx2Row(r));
+        return _raw.FindAll(fieldName, value).ConvertAll(r => new ArchetypeRow(r));
     }
 }
 
-public class TestXlsx3Table
+public class ArchetypeSquadTable
 {
     private readonly TableData _raw;
-    private List<TestXlsx3Row> _rows;
+    private List<ArchetypeSquadRow> _rows;
 
-    public TestXlsx3Table(TableData raw) { _raw = raw; }
+    public ArchetypeSquadTable(TableData raw) { _raw = raw; }
     public int Count => _raw.Count;
 
-    public List<TestXlsx3Row> GetAll()
+    public List<ArchetypeSquadRow> GetAll()
     {
         if (_rows == null)
-            _rows = _raw.GetAll().ConvertAll(r => new TestXlsx3Row(r));
+            _rows = _raw.GetAll().ConvertAll(r => new ArchetypeSquadRow(r));
         return _rows;
     }
 
-    public TestXlsx3Row FindById(int id)
+    public ArchetypeSquadRow FindById(int id)
     {
         var record = _raw.Find("id", id);
-        return record != null ? new TestXlsx3Row(record) : null;
+        return record != null ? new ArchetypeSquadRow(record) : null;
     }
 
-    public TestXlsx3Row Find(string fieldName, object value)
+    public ArchetypeSquadRow Find(string fieldName, object value)
     {
         var record = _raw.Find(fieldName, value);
-        return record != null ? new TestXlsx3Row(record) : null;
+        return record != null ? new ArchetypeSquadRow(record) : null;
     }
 
-    public List<TestXlsx3Row> FindAll(string fieldName, object value)
+    public List<ArchetypeSquadRow> FindAll(string fieldName, object value)
     {
-        return _raw.FindAll(fieldName, value).ConvertAll(r => new TestXlsx3Row(r));
+        return _raw.FindAll(fieldName, value).ConvertAll(r => new ArchetypeSquadRow(r));
+    }
+}
+
+public class CurrencyTable
+{
+    private readonly TableData _raw;
+    private List<CurrencyRow> _rows;
+
+    public CurrencyTable(TableData raw) { _raw = raw; }
+    public int Count => _raw.Count;
+
+    public List<CurrencyRow> GetAll()
+    {
+        if (_rows == null)
+            _rows = _raw.GetAll().ConvertAll(r => new CurrencyRow(r));
+        return _rows;
+    }
+
+    public CurrencyRow FindById(int id)
+    {
+        var record = _raw.Find("id", id);
+        return record != null ? new CurrencyRow(record) : null;
+    }
+
+    public CurrencyRow Find(string fieldName, object value)
+    {
+        var record = _raw.Find(fieldName, value);
+        return record != null ? new CurrencyRow(record) : null;
+    }
+
+    public List<CurrencyRow> FindAll(string fieldName, object value)
+    {
+        return _raw.FindAll(fieldName, value).ConvertAll(r => new CurrencyRow(r));
+    }
+}
+
+public class AffixTable
+{
+    private readonly TableData _raw;
+    private List<AffixRow> _rows;
+
+    public AffixTable(TableData raw) { _raw = raw; }
+    public int Count => _raw.Count;
+
+    public List<AffixRow> GetAll()
+    {
+        if (_rows == null)
+            _rows = _raw.GetAll().ConvertAll(r => new AffixRow(r));
+        return _rows;
+    }
+
+    public AffixRow FindById(int id)
+    {
+        var record = _raw.Find("id", id);
+        return record != null ? new AffixRow(record) : null;
+    }
+
+    public AffixRow Find(string fieldName, object value)
+    {
+        var record = _raw.Find(fieldName, value);
+        return record != null ? new AffixRow(record) : null;
+    }
+
+    public List<AffixRow> FindAll(string fieldName, object value)
+    {
+        return _raw.FindAll(fieldName, value).ConvertAll(r => new AffixRow(r));
+    }
+}
+
+public class EquipmentTable
+{
+    private readonly TableData _raw;
+    private List<EquipmentRow> _rows;
+
+    public EquipmentTable(TableData raw) { _raw = raw; }
+    public int Count => _raw.Count;
+
+    public List<EquipmentRow> GetAll()
+    {
+        if (_rows == null)
+            _rows = _raw.GetAll().ConvertAll(r => new EquipmentRow(r));
+        return _rows;
+    }
+
+    public EquipmentRow FindById(int id)
+    {
+        var record = _raw.Find("id", id);
+        return record != null ? new EquipmentRow(record) : null;
+    }
+
+    public EquipmentRow Find(string fieldName, object value)
+    {
+        var record = _raw.Find(fieldName, value);
+        return record != null ? new EquipmentRow(record) : null;
+    }
+
+    public List<EquipmentRow> FindAll(string fieldName, object value)
+    {
+        return _raw.FindAll(fieldName, value).ConvertAll(r => new EquipmentRow(r));
+    }
+}
+
+public class OrderTable
+{
+    private readonly TableData _raw;
+    private List<OrderRow> _rows;
+
+    public OrderTable(TableData raw) { _raw = raw; }
+    public int Count => _raw.Count;
+
+    public List<OrderRow> GetAll()
+    {
+        if (_rows == null)
+            _rows = _raw.GetAll().ConvertAll(r => new OrderRow(r));
+        return _rows;
+    }
+
+    public OrderRow FindById(int id)
+    {
+        var record = _raw.Find("id", id);
+        return record != null ? new OrderRow(record) : null;
+    }
+
+    public OrderRow Find(string fieldName, object value)
+    {
+        var record = _raw.Find(fieldName, value);
+        return record != null ? new OrderRow(record) : null;
+    }
+
+    public List<OrderRow> FindAll(string fieldName, object value)
+    {
+        return _raw.FindAll(fieldName, value).ConvertAll(r => new OrderRow(r));
+    }
+}
+
+public class SkillTable
+{
+    private readonly TableData _raw;
+    private List<SkillRow> _rows;
+
+    public SkillTable(TableData raw) { _raw = raw; }
+    public int Count => _raw.Count;
+
+    public List<SkillRow> GetAll()
+    {
+        if (_rows == null)
+            _rows = _raw.GetAll().ConvertAll(r => new SkillRow(r));
+        return _rows;
+    }
+
+    public SkillRow FindById(int id)
+    {
+        var record = _raw.Find("id", id);
+        return record != null ? new SkillRow(record) : null;
+    }
+
+    public SkillRow Find(string fieldName, object value)
+    {
+        var record = _raw.Find(fieldName, value);
+        return record != null ? new SkillRow(record) : null;
+    }
+
+    public List<SkillRow> FindAll(string fieldName, object value)
+    {
+        return _raw.FindAll(fieldName, value).ConvertAll(r => new SkillRow(r));
     }
 }
 
 public static class Tables
 {
-    private static TestXlsxTable _testXlsx;
-    public static TestXlsxTable TestXlsx
+    private static AdventurerTable _adventurer;
+    public static AdventurerTable Adventurer
     {
         get
         {
-            if (_testXlsx == null)
-                _testXlsx = new TestXlsxTable(TableManager.Instance.GetTable("testXlsx"));
-            return _testXlsx;
+            if (_adventurer == null)
+                _adventurer = new AdventurerTable(TableManager.Instance.GetTable("adventurer"));
+            return _adventurer;
         }
     }
 
-    private static TestXlsx2Table _testXlsx2;
-    public static TestXlsx2Table TestXlsx2
+    private static ArchetypeTable _archetype;
+    public static ArchetypeTable Archetype
     {
         get
         {
-            if (_testXlsx2 == null)
-                _testXlsx2 = new TestXlsx2Table(TableManager.Instance.GetTable("testXlsx2"));
-            return _testXlsx2;
+            if (_archetype == null)
+                _archetype = new ArchetypeTable(TableManager.Instance.GetTable("archetype"));
+            return _archetype;
         }
     }
 
-    private static TestXlsx3Table _testXlsx3;
-    public static TestXlsx3Table TestXlsx3
+    private static ArchetypeSquadTable _archetype_squad;
+    public static ArchetypeSquadTable ArchetypeSquad
     {
         get
         {
-            if (_testXlsx3 == null)
-                _testXlsx3 = new TestXlsx3Table(TableManager.Instance.GetTable("testXlsx3"));
-            return _testXlsx3;
+            if (_archetype_squad == null)
+                _archetype_squad = new ArchetypeSquadTable(TableManager.Instance.GetTable("archetype_squad"));
+            return _archetype_squad;
+        }
+    }
+
+    private static CurrencyTable _currency;
+    public static CurrencyTable Currency
+    {
+        get
+        {
+            if (_currency == null)
+                _currency = new CurrencyTable(TableManager.Instance.GetTable("currency"));
+            return _currency;
+        }
+    }
+
+    private static AffixTable _affix;
+    public static AffixTable Affix
+    {
+        get
+        {
+            if (_affix == null)
+                _affix = new AffixTable(TableManager.Instance.GetTable("affix"));
+            return _affix;
+        }
+    }
+
+    private static EquipmentTable _equipment;
+    public static EquipmentTable Equipment
+    {
+        get
+        {
+            if (_equipment == null)
+                _equipment = new EquipmentTable(TableManager.Instance.GetTable("equipment"));
+            return _equipment;
+        }
+    }
+
+    private static OrderTable _order;
+    public static OrderTable Order
+    {
+        get
+        {
+            if (_order == null)
+                _order = new OrderTable(TableManager.Instance.GetTable("order"));
+            return _order;
+        }
+    }
+
+    private static SkillTable _skill;
+    public static SkillTable Skill
+    {
+        get
+        {
+            if (_skill == null)
+                _skill = new SkillTable(TableManager.Instance.GetTable("skill"));
+            return _skill;
         }
     }
 

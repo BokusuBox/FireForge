@@ -1,0 +1,190 @@
+{
+  "tableName": "equipment",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int",
+      "comment": "装备ID"
+    },
+    {
+      "name": "equipment_name",
+      "type": "string",
+      "comment": "装备名称"
+    },
+    {
+      "name": "slot",
+      "type": "EquipmentSlot",
+      "comment": "装备槽位"
+    },
+    {
+      "name": "rarity",
+      "type": "EquipmentRarity",
+      "comment": "品质"
+    },
+    {
+      "name": "i_lvl",
+      "type": "int",
+      "comment": "物品等级"
+    },
+    {
+      "name": "max_ap",
+      "type": "int",
+      "comment": "最大AP"
+    },
+    {
+      "name": "base_attack",
+      "type": "int",
+      "comment": "基础攻击"
+    },
+    {
+      "name": "base_armor",
+      "type": "int",
+      "comment": "基础护甲"
+    },
+    {
+      "name": "prefix_slots",
+      "type": "int",
+      "comment": "前缀槽数"
+    },
+    {
+      "name": "suffix_slots",
+      "type": "int",
+      "comment": "后缀槽数"
+    },
+    {
+      "name": "skill_pool",
+      "type": "(list#sep=|),int",
+      "comment": "可抽取技能ID池"
+    }
+  ],
+  "data": [
+    {
+      "id": 1,
+      "equipment_name": "学徒短剑",
+      "slot": "Weapon",
+      "rarity": "Normal",
+      "i_lvl": 1,
+      "max_ap": 6,
+      "base_attack": 5,
+      "base_armor": 0,
+      "prefix_slots": 1,
+      "suffix_slots": 1,
+      "skill_pool": [
+        101,
+        102
+      ]
+    },
+    {
+      "id": 2,
+      "equipment_name": "学徒法杖",
+      "slot": "Weapon",
+      "rarity": "Normal",
+      "i_lvl": 1,
+      "max_ap": 6,
+      "base_attack": 2,
+      "base_armor": 3,
+      "prefix_slots": 1,
+      "suffix_slots": 1,
+      "skill_pool": [
+        201,
+        202
+      ]
+    },
+    {
+      "id": 3,
+      "equipment_name": "精良长剑",
+      "slot": "Weapon",
+      "rarity": "Magic",
+      "i_lvl": 15,
+      "max_ap": 8,
+      "base_attack": 10,
+      "base_armor": 0,
+      "prefix_slots": 2,
+      "suffix_slots": 1,
+      "skill_pool": [
+        101,
+        103,
+        104
+      ]
+    },
+    {
+      "id": 4,
+      "equipment_name": "学徒皮甲",
+      "slot": "BodyArmor",
+      "rarity": "Normal",
+      "i_lvl": 1,
+      "max_ap": 6,
+      "base_attack": 0,
+      "base_armor": 5,
+      "prefix_slots": 1,
+      "suffix_slots": 1,
+      "skill_pool": [
+        301,
+        302
+      ]
+    },
+    {
+      "id": 5,
+      "equipment_name": "精良锁甲",
+      "slot": "BodyArmor",
+      "rarity": "Magic",
+      "i_lvl": 20,
+      "max_ap": 8,
+      "base_attack": 0,
+      "base_armor": 12,
+      "prefix_slots": 1,
+      "suffix_slots": 2,
+      "skill_pool": [
+        301,
+        303,
+        304
+      ]
+    },
+    {
+      "id": 6,
+      "equipment_name": "学徒铁盔",
+      "slot": "Helmet",
+      "rarity": "Normal",
+      "i_lvl": 1,
+      "max_ap": 5,
+      "base_attack": 0,
+      "base_armor": 3,
+      "prefix_slots": 1,
+      "suffix_slots": 1,
+      "skill_pool": [
+        401
+      ]
+    },
+    {
+      "id": 7,
+      "equipment_name": "学徒皮靴",
+      "slot": "Boots",
+      "rarity": "Normal",
+      "i_lvl": 1,
+      "max_ap": 5,
+      "base_attack": 0,
+      "base_armor": 2,
+      "prefix_slots": 0,
+      "suffix_slots": 2,
+      "skill_pool": [
+        501,
+        502
+      ]
+    },
+    {
+      "id": 8,
+      "equipment_name": "学徒护手",
+      "slot": "Gloves",
+      "rarity": "Normal",
+      "i_lvl": 1,
+      "max_ap": 5,
+      "base_attack": 2,
+      "base_armor": 1,
+      "prefix_slots": 1,
+      "suffix_slots": 1,
+      "skill_pool": [
+        601
+      ]
+    }
+  ]
+}

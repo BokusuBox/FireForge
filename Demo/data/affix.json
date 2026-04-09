@@ -1,0 +1,272 @@
+{
+  "tableName": "affix",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int",
+      "comment": "词缀ID"
+    },
+    {
+      "name": "group_id",
+      "type": "int",
+      "comment": "词缀组ID"
+    },
+    {
+      "name": "group_name",
+      "type": "string",
+      "comment": "词缀组名称"
+    },
+    {
+      "name": "slot_type",
+      "type": "AffixSlotType",
+      "comment": "槽位类型"
+    },
+    {
+      "name": "tier",
+      "type": "int",
+      "comment": "阶数(T1最强)"
+    },
+    {
+      "name": "required_i_lvl",
+      "type": "int",
+      "comment": "装等门槛"
+    },
+    {
+      "name": "weight",
+      "type": "int",
+      "comment": "抽取权重"
+    },
+    {
+      "name": "stat_modifiers",
+      "type": "string",
+      "comment": "属性修改(格式: stat:value|stat:value)"
+    },
+    {
+      "name": "tag",
+      "type": "string",
+      "comment": "标签(用于定向精华匹配)"
+    }
+  ],
+  "data": [
+    {
+      "id": 101,
+      "group_id": 101,
+      "group_name": "纯攻击",
+      "slot_type": "Prefix",
+      "tier": 5,
+      "required_i_lvl": 1,
+      "weight": 1000,
+      "stat_modifiers": "attack:1",
+      "tag": "attack"
+    },
+    {
+      "id": 102,
+      "group_id": 101,
+      "group_name": "纯攻击",
+      "slot_type": "Prefix",
+      "tier": 4,
+      "required_i_lvl": 10,
+      "weight": 800,
+      "stat_modifiers": "attack:2",
+      "tag": "attack"
+    },
+    {
+      "id": 103,
+      "group_id": 101,
+      "group_name": "纯攻击",
+      "slot_type": "Prefix",
+      "tier": 3,
+      "required_i_lvl": 30,
+      "weight": 500,
+      "stat_modifiers": "attack:3",
+      "tag": "attack"
+    },
+    {
+      "id": 104,
+      "group_id": 101,
+      "group_name": "纯攻击",
+      "slot_type": "Prefix",
+      "tier": 2,
+      "required_i_lvl": 50,
+      "weight": 200,
+      "stat_modifiers": "attack:4",
+      "tag": "attack"
+    },
+    {
+      "id": 105,
+      "group_id": 101,
+      "group_name": "纯攻击",
+      "slot_type": "Prefix",
+      "tier": 1,
+      "required_i_lvl": 70,
+      "weight": 50,
+      "stat_modifiers": "attack:5",
+      "tag": "attack"
+    },
+    {
+      "id": 201,
+      "group_id": 102,
+      "group_name": "纯护甲",
+      "slot_type": "Suffix",
+      "tier": 5,
+      "required_i_lvl": 1,
+      "weight": 1000,
+      "stat_modifiers": "armor:1",
+      "tag": "defense"
+    },
+    {
+      "id": 202,
+      "group_id": 102,
+      "group_name": "纯护甲",
+      "slot_type": "Suffix",
+      "tier": 4,
+      "required_i_lvl": 10,
+      "weight": 800,
+      "stat_modifiers": "armor:2",
+      "tag": "defense"
+    },
+    {
+      "id": 203,
+      "group_id": 102,
+      "group_name": "纯护甲",
+      "slot_type": "Suffix",
+      "tier": 3,
+      "required_i_lvl": 30,
+      "weight": 500,
+      "stat_modifiers": "armor:3",
+      "tag": "defense"
+    },
+    {
+      "id": 204,
+      "group_id": 102,
+      "group_name": "纯护甲",
+      "slot_type": "Suffix",
+      "tier": 2,
+      "required_i_lvl": 50,
+      "weight": 200,
+      "stat_modifiers": "armor:4",
+      "tag": "defense"
+    },
+    {
+      "id": 205,
+      "group_id": 102,
+      "group_name": "纯护甲",
+      "slot_type": "Suffix",
+      "tier": 1,
+      "required_i_lvl": 70,
+      "weight": 50,
+      "stat_modifiers": "armor:5",
+      "tag": "defense"
+    },
+    {
+      "id": 301,
+      "group_id": 103,
+      "group_name": "战意",
+      "slot_type": "Prefix",
+      "tier": 5,
+      "required_i_lvl": 1,
+      "weight": 600,
+      "stat_modifiers": "attack:1|armor:1",
+      "tag": "attack|defense"
+    },
+    {
+      "id": 302,
+      "group_id": 103,
+      "group_name": "战意",
+      "slot_type": "Prefix",
+      "tier": 4,
+      "required_i_lvl": 15,
+      "weight": 400,
+      "stat_modifiers": "attack:2|armor:2",
+      "tag": "attack|defense"
+    },
+    {
+      "id": 303,
+      "group_id": 103,
+      "group_name": "战意",
+      "slot_type": "Prefix",
+      "tier": 3,
+      "required_i_lvl": 30,
+      "weight": 250,
+      "stat_modifiers": "attack:3|armor:3",
+      "tag": "attack|defense"
+    },
+    {
+      "id": 304,
+      "group_id": 103,
+      "group_name": "战意",
+      "slot_type": "Prefix",
+      "tier": 2,
+      "required_i_lvl": 50,
+      "weight": 100,
+      "stat_modifiers": "attack:4|armor:4",
+      "tag": "attack|defense"
+    },
+    {
+      "id": 305,
+      "group_id": 103,
+      "group_name": "战意",
+      "slot_type": "Prefix",
+      "tier": 1,
+      "required_i_lvl": 70,
+      "weight": 25,
+      "stat_modifiers": "attack:5|armor:5",
+      "tag": "attack|defense"
+    },
+    {
+      "id": 401,
+      "group_id": 104,
+      "group_name": "锐利",
+      "slot_type": "Suffix",
+      "tier": 5,
+      "required_i_lvl": 1,
+      "weight": 800,
+      "stat_modifiers": "crit_rate:1",
+      "tag": "crit"
+    },
+    {
+      "id": 402,
+      "group_id": 104,
+      "group_name": "锐利",
+      "slot_type": "Suffix",
+      "tier": 4,
+      "required_i_lvl": 15,
+      "weight": 600,
+      "stat_modifiers": "crit_rate:2",
+      "tag": "crit"
+    },
+    {
+      "id": 403,
+      "group_id": 104,
+      "group_name": "锐利",
+      "slot_type": "Suffix",
+      "tier": 3,
+      "required_i_lvl": 35,
+      "weight": 300,
+      "stat_modifiers": "crit_rate:3",
+      "tag": "crit"
+    },
+    {
+      "id": 404,
+      "group_id": 104,
+      "group_name": "锐利",
+      "slot_type": "Suffix",
+      "tier": 2,
+      "required_i_lvl": 55,
+      "weight": 120,
+      "stat_modifiers": "crit_rate:4",
+      "tag": "crit"
+    },
+    {
+      "id": 405,
+      "group_id": 104,
+      "group_name": "锐利",
+      "slot_type": "Suffix",
+      "tier": 1,
+      "required_i_lvl": 75,
+      "weight": 30,
+      "stat_modifiers": "crit_rate:5",
+      "tag": "crit"
+    }
+  ]
+}

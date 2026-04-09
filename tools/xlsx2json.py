@@ -163,9 +163,181 @@ def parse_enum_xlsx(xlsx_path):
 
     return enum_defs, all_errors
 
+
+def parse_bean_xlsx(xlsx_path):
+    file_name = os.path.splitext(os.path.basename(xlsx_path))[0]
+    all_errors = []
+    bean_defs = {}
+
+    try:
+        wb = load_workbook(xlsx_path, read_only=True, data_only=True)
+    except Exception as e:
+        all_errors.append(f"[错误] 无法打开文件 {file_name}.xlsx: {e}")
+        return bean_defs, all_errors
+
+    for sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+        if ws.max_row < 2 or ws.max_column < 2:
+            continue
+
+        fields_header_col = None
+        for col in range(1, ws.max_column + 1):
+            val = ws.cell(row=1, column=col).value
+            if val and str(val).strip() == '*fields':
+                fields_header_col = col
+                break
+
+        if fields_header_col is None:
+            continue
+
+        field_name_col = fields_header_col
+        field_type_col = fields_header_col + 2
+
+        current_bean = None
+        current_fields = []
+
+        for row in range(1, ws.max_row + 1):
+            a_val = ws.cell(row=row, column=1).value
+            b_val = ws.cell(row=row, column=2).value
+            e_val = ws.cell(row=row, column=5).value
+
+            is_comment = (a_val is not None and str(a_val).strip() == '##')
+
+            if is_comment:
+                if current_bean is not None:
+                    bean_defs[current_bean['full_name']] = current_bean
+                current_bean = None
+                current_fields = []
+                continue
+
+            b_str = str(b_val).strip() if b_val is not None else ''
+
+            if b_str and BEAN_FULL_NAME_RE.match(b_str):
+                if current_bean is not None:
+                    bean_defs[current_bean['full_name']] = current_bean
+                sep = str(e_val).strip() if e_val is not None else ','
+                current_bean = {
+                    'full_name': b_str,
+                    'sep': sep,
+                    'fields': [],
+                }
+                current_fields = []
+                source = f"{file_name}.xlsx / {sheet_name} / {b_str}"
+                short_name = b_str.split('.')[-1]
+                if not VALID_IDENTIFIER_RE.match(short_name):
+                    all_errors.append(f"[错误] Bean名 '{short_name}' 不是合法的C#标识符 ({source})")
+                if short_name in CS_KEYWORDS:
+                    all_errors.append(f"[错误] Bean名 '{short_name}' 是C#关键字，请修改 ({source})")
+                fname_val = ws.cell(row=row, column=field_name_col).value
+                ftype_val = ws.cell(row=row, column=field_type_col).value
+                if fname_val is not None:
+                    fname = str(fname_val).strip()
+                    ftype = str(ftype_val).strip() if ftype_val is not None else 'int'
+                    if fname:
+                        current_bean['fields'].append({
+                            'name': fname,
+                            'type': ftype,
+                        })
+                continue
+
+            if current_bean is not None:
+                fname_val = ws.cell(row=row, column=field_name_col).value
+                ftype_val = ws.cell(row=row, column=field_type_col).value
+                if fname_val is not None:
+                    fname = str(fname_val).strip()
+                    ftype = str(ftype_val).strip() if ftype_val is not None else 'int'
+                    if fname:
+                        source = f"{file_name}.xlsx / {sheet_name} / {current_bean['full_name']} / {fname}"
+                        if not VALID_IDENTIFIER_RE.match(fname):
+                            all_errors.append(f"[错误] Bean {current_bean['full_name']} 的字段名 '{fname}' 不是合法的C#标识符 ({source})")
+                        if fname in CS_KEYWORDS:
+                            all_errors.append(f"[错误] Bean {current_bean['full_name']} 的字段名 '{fname}' 是C#关键字，请修改 ({source})")
+                        current_bean['fields'].append({
+                            'name': fname,
+                            'type': ftype,
+                        })
+
+        if current_bean is not None:
+            bean_defs[current_bean['full_name']] = current_bean
+
+    wb.close()
+
+    seen_names = {}
+    for full_name, bean_def in bean_defs.items():
+        short_name = full_name.split('.')[-1]
+        if short_name in seen_names:
+            all_errors.append(f"[错误] Bean短名 '{short_name}' 重复定义 ({seen_names[short_name]} 和 {full_name})")
+        seen_names[short_name] = full_name
+
+        fname_set = set()
+        for f in bean_def['fields']:
+            if f['name'] in fname_set:
+                all_errors.append(f"[错误] Bean {full_name} 中存在重复的字段名 '{f['name']}'")
+            fname_set.add(f['name'])
+
+    return bean_defs, all_errors
+
+
+def validate_bean_refs(bean_defs, enum_defs):
+    all_errors = []
+    all_bean_short_names = {fn.split('.')[-1]: fn for fn in bean_defs}
+
+    for full_name, bean_def in bean_defs.items():
+        for f in bean_def['fields']:
+            ftype = f['type']
+            type_info = parse_type(ftype, bean_defs)
+            if type_info['kind'] == 'enum':
+                if ftype not in enum_defs:
+                    all_errors.append(f"[错误] Bean {full_name} 字段 '{f['name']}' 引用了未定义的枚举 '{ftype}'")
+            elif type_info['kind'] == 'bean':
+                ref_name = ftype
+                if ref_name not in bean_defs and ref_name not in all_bean_short_names:
+                    all_errors.append(f"[错误] Bean {full_name} 字段 '{f['name']}' 引用了未定义的Bean '{ref_name}'")
+            elif type_info['kind'] == 'list':
+                elem = type_info['element_type']
+                if elem not in BASIC_TYPES and elem not in enum_defs and elem not in bean_defs and elem not in all_bean_short_names:
+                    if not VALID_IDENTIFIER_RE.match(elem):
+                        all_errors.append(f"[错误] Bean {full_name} 字段 '{f['name']}' 的list元素类型 '{elem}' 不是合法标识符")
+
+    visited = set()
+    path_set = set()
+
+    def check_cycle(full_name):
+        if full_name in path_set:
+            return True
+        if full_name in visited:
+            return False
+        path_set.add(full_name)
+        if full_name in bean_defs:
+            for f in bean_defs[full_name]['fields']:
+                ftype = f['type']
+                ti = parse_type(ftype, bean_defs)
+                ref = None
+                if ti['kind'] == 'bean':
+                    ref = ti['type']
+                elif ti['kind'] == 'list' and ti['element_type'] not in BASIC_TYPES and ti['element_type'] not in enum_defs:
+                    ref = ti['element_type']
+                if ref:
+                    resolved = all_bean_short_names.get(ref, ref)
+                    if resolved in bean_defs and check_cycle(resolved):
+                        all_errors.append(f"[错误] Bean {full_name} 字段 '{f['name']}' 存在循环引用")
+                        return True
+        path_set.remove(full_name)
+        visited.add(full_name)
+        return False
+
+    for full_name in bean_defs:
+        check_cycle(full_name)
+
+    return all_errors
+
+
 def _resolve_root_dir():
     if getattr(sys, 'frozen', False):
-        return os.path.dirname(os.path.dirname(os.path.abspath(sys.executable)))
+        exe_dir = os.path.dirname(os.path.abspath(sys.executable))
+        if os.path.basename(exe_dir) == 'data':
+            return os.path.dirname(exe_dir)
+        return exe_dir
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 ROOT_DIR = _resolve_root_dir()
@@ -174,21 +346,33 @@ JSON_OUTPUT_DIR = os.path.join(ROOT_DIR, 'demo', 'data')
 CS_OUTPUT_DIR = os.path.join(ROOT_DIR, 'demo', 'scripts', 'data', 'generated')
 
 BASIC_TYPES = {'int', 'float', 'double', 'string', 'bool'}
-LIST_PATTERN = re.compile(r'^\(list#sep=(.)\),(\w+)$')
+LIST_PATTERN = re.compile(r'^\(list#sep=(.)\),(.+)$')
+BEAN_FULL_NAME_RE = re.compile(r'^(\w+)\.(\w+)$')
 
 
-def parse_type(type_str):
+def parse_type(type_str, bean_defs=None):
     type_str = type_str.strip()
     match = LIST_PATTERN.match(type_str)
     if match:
+        elem_type = match.group(2).strip()
         return {
             'kind': 'list',
             'separator': match.group(1),
-            'element_type': match.group(2)
+            'element_type': elem_type
         }
     if type_str in BASIC_TYPES:
         return {
             'kind': 'basic',
+            'type': type_str
+        }
+    if bean_defs and type_str in bean_defs:
+        return {
+            'kind': 'bean',
+            'type': type_str
+        }
+    if BEAN_FULL_NAME_RE.match(type_str):
+        return {
+            'kind': 'bean',
             'type': type_str
         }
     return {
@@ -235,98 +419,305 @@ def convert_value(raw_value, type_info):
     return raw_value
 
 
-def process_sheet(ws, sheet_name):
+def bean_col_span(bean_full_name, bean_defs):
+    bean_def = bean_defs.get(bean_full_name)
+    if bean_def is None:
+        short_map = {fn.split('.')[-1]: fn for fn in bean_defs}
+        bean_def = bean_defs.get(short_map.get(bean_full_name, ''))
+    if bean_def is None:
+        return 1
+    total = 0
+    for field in bean_def['fields']:
+        field_type_info = parse_type(field['type'], bean_defs)
+        if field_type_info['kind'] == 'bean':
+            total += bean_col_span(field_type_info['type'], bean_defs)
+        elif field_type_info['kind'] == 'list' and field_type_info['element_type'] not in BASIC_TYPES:
+            total += bean_col_span(field_type_info['element_type'], bean_defs)
+        else:
+            total += 1
+    return total
+
+
+def build_bean_col_layout(bean_full_name, bean_defs, start_col, row4, row5):
+    bean_def = bean_defs.get(bean_full_name)
+    if bean_def is None:
+        short_map = {fn.split('.')[-1]: fn for fn in bean_defs}
+        bean_def = bean_defs.get(short_map.get(bean_full_name, ''))
+    if bean_def is None:
+        return []
+    layout = []
+    col_offset = start_col
+    for field in bean_def['fields']:
+        field_type_info = parse_type(field['type'], bean_defs)
+        if field_type_info['kind'] == 'bean':
+            sub_layout = build_bean_col_layout(field_type_info['type'], bean_defs, col_offset, row4, row5)
+            layout.append({
+                'kind': 'bean_field',
+                'name': field['name'],
+                'type_info': field_type_info,
+                'sub_layout': sub_layout,
+                'col_count': sum(sl.get('col_count', 1) for sl in sub_layout),
+            })
+            col_offset += sum(sl.get('col_count', 1) for sl in sub_layout)
+        elif field_type_info['kind'] == 'list' and field_type_info['element_type'] not in BASIC_TYPES:
+            sub_layout = build_bean_col_layout(field_type_info['element_type'], bean_defs, col_offset, row4, row5)
+            layout.append({
+                'kind': 'list_bean_field',
+                'name': field['name'],
+                'type_info': field_type_info,
+                'sub_layout': sub_layout,
+                'col_count': sum(sl.get('col_count', 1) for sl in sub_layout),
+            })
+            col_offset += sum(sl.get('col_count', 1) for sl in sub_layout)
+        else:
+            sub_name = row4[col_offset] if col_offset < len(row4) else ''
+            sub_comment = row5[col_offset] if col_offset < len(row5) else ''
+            if not sub_name:
+                sub_name = field['name']
+            layout.append({
+                'kind': 'basic_field',
+                'name': field['name'],
+                'type_info': field_type_info,
+                'col_idx': col_offset,
+                'col_count': 1,
+                'sub_name': sub_name,
+                'comment': sub_comment,
+            })
+            col_offset += 1
+    return layout
+
+
+def read_bean_row(layout, ws, row, bean_defs, enum_values, errors, sheet_name):
+    result = {}
+    has_data = False
+    for entry in layout:
+        if entry['kind'] == 'basic_field':
+            raw_val = ws.cell(row=row, column=entry['col_idx'] + 1).value
+            if raw_val is not None:
+                has_data = True
+                field_type_info = entry['type_info']
+                if field_type_info['kind'] == 'enum':
+                    enum_name = field_type_info['type']
+                    if enum_name not in enum_values:
+                        enum_values[enum_name] = set()
+                    enum_values[enum_name].add(str(raw_val).strip())
+                try:
+                    result[entry['name']] = convert_value(raw_val, field_type_info)
+                except ValueError as e:
+                    errors.append(f"[错误] 表 {sheet_name} 第{row}行 字段 {entry['name']}: {e}")
+                    result[entry['name']] = None
+        elif entry['kind'] == 'bean_field':
+            sub_result, sub_has = read_bean_row(entry['sub_layout'], ws, row, bean_defs, enum_values, errors, sheet_name)
+            if sub_has:
+                has_data = True
+                result[entry['name']] = sub_result
+        elif entry['kind'] == 'list_bean_field':
+            sub_result, sub_has = read_bean_row(entry['sub_layout'], ws, row, bean_defs, enum_values, errors, sheet_name)
+            if sub_has:
+                has_data = True
+                if entry['name'] not in result:
+                    result[entry['name']] = []
+                result[entry['name']].append(sub_result)
+    return result, has_data
+
+
+def process_sheet(ws, sheet_name, bean_defs=None):
     if ws.max_row < 4 or ws.max_column < 2:
         return None
 
+    if bean_defs is None:
+        bean_defs = {}
+
     errors = []
 
-    field_names = []
-    for col in range(2, ws.max_column + 1):
+    row1 = []
+    for col in range(1, ws.max_column + 1):
         val = ws.cell(row=1, column=col).value
-        if val is None:
-            break
-        field_names.append(str(val).strip())
+        row1.append(str(val).strip() if val is not None else '')
 
-    if not field_names:
-        return None
-
-    field_types = []
-    for col in range(2, 2 + len(field_names)):
+    row2 = []
+    for col in range(1, ws.max_column + 1):
         val = ws.cell(row=2, column=col).value
-        if val is None:
-            field_types.append({'kind': 'basic', 'type': 'string'})
+        row2.append(str(val).strip() if val is not None else '')
+
+    row4 = []
+    for col in range(1, ws.max_column + 1):
+        val = ws.cell(row=4, column=col).value
+        row4.append(str(val).strip() if val is not None else '')
+
+    row5 = []
+    for col in range(1, ws.max_column + 1):
+        val = ws.cell(row=5, column=col).value
+        row5.append(str(val).strip() if val is not None else '')
+
+    col_groups = []
+    i = 1
+    while i < len(row1):
+        header = row1[i]
+        if not header:
+            i += 1
+            continue
+
+        if header.startswith('*'):
+            bean_field_name = header[1:]
+            bean_type_str = row2[i] if i < len(row2) else ''
+            bean_type_info = parse_type(bean_type_str, bean_defs)
+
+            if bean_type_info['kind'] == 'bean':
+                bean_full_name = bean_type_info['type']
+            elif bean_type_info['kind'] == 'list' and bean_type_info['element_type'] not in BASIC_TYPES:
+                bean_full_name = bean_type_info['element_type']
+            else:
+                bean_full_name = bean_type_str
+
+            bean_def = bean_defs.get(bean_full_name)
+            if bean_def is None:
+                short_map = {fn.split('.')[-1]: fn for fn in bean_defs}
+                bean_def = bean_defs.get(short_map.get(bean_full_name, ''))
+
+            if bean_def is None:
+                errors.append(f"[错误] 表 {sheet_name} 第{i+1}列: Bean '{bean_full_name}' 未在 __bean__.xlsx 中定义")
+                i += 1
+                continue
+
+            col_count = bean_col_span(bean_full_name, bean_defs)
+            layout = build_bean_col_layout(bean_full_name, bean_defs, i, row4, row5)
+
+            col_groups.append({
+                'kind': 'bean',
+                'field_name': bean_field_name,
+                'bean_full_name': bean_full_name,
+                'bean_def': bean_def,
+                'type_str': bean_type_str,
+                'layout': layout,
+                'start_col': i,
+                'col_count': col_count,
+            })
+            i += col_count
         else:
-            type_str = str(val).strip()
-            type_info = parse_type(type_str)
+            type_str = row2[i] if i < len(row2) else ''
+            type_info = parse_type(type_str, bean_defs)
             if type_info['kind'] == 'list':
                 elem = type_info['element_type']
                 if elem not in BASIC_TYPES and not VALID_IDENTIFIER_RE.match(elem):
-                    errors.append(f"[错误] 表 {sheet_name} 第2行第{col}列: list元素类型 '{elem}' 不是合法标识符")
-            field_types.append(type_info)
+                    errors.append(f"[错误] 表 {sheet_name} 第2行第{i+1}列: list元素类型 '{elem}' 不是合法标识符")
 
-    field_comments = []
-    for col in range(2, 2 + len(field_names)):
-        val = ws.cell(row=3, column=col).value
-        field_comments.append(str(val).strip() if val else '')
+            comment = row5[i] if i < len(row5) else ''
+            col_groups.append({
+                'kind': 'basic',
+                'field_name': header,
+                'type_str': type_str,
+                'type_info': type_info,
+                'col_idx': i,
+                'comment': comment,
+            })
+            i += 1
+
+    if not col_groups:
+        return None
 
     data_rows = []
     enum_values = {}
+    current_record = None
 
-    for row in range(4, ws.max_row + 1):
-        for col_idx, type_info in enumerate(field_types):
-            if type_info['kind'] == 'enum':
-                cell_val = ws.cell(row=row, column=col_idx + 2).value
-                if cell_val is not None:
-                    enum_name = type_info['type']
-                    if enum_name not in enum_values:
-                        enum_values[enum_name] = set()
-                    enum_values[enum_name].add(str(cell_val).strip())
-            elif type_info['kind'] == 'list' and type_info['element_type'] not in BASIC_TYPES:
-                cell_val = ws.cell(row=row, column=col_idx + 2).value
-                if cell_val is not None:
-                    enum_name = type_info['element_type']
-                    raw_str = str(cell_val).strip()
-                    if raw_str:
-                        if enum_name not in enum_values:
-                            enum_values[enum_name] = set()
-                        parts = raw_str.split(type_info['separator'])
-                        for p in parts:
-                            v = p.strip()
-                            if v:
-                                enum_values[enum_name].add(v)
+    basic_groups = [g for g in col_groups if g['kind'] == 'basic']
+    bean_groups = [g for g in col_groups if g['kind'] == 'bean']
 
+    for row in range(6, ws.max_row + 1):
         marker = ws.cell(row=row, column=1).value
         if marker is not None and str(marker).strip() == '##':
             continue
 
-        has_data = False
-        for col in range(2, 2 + len(field_names)):
-            if ws.cell(row=row, column=col).value is not None:
-                has_data = True
+        has_basic_data = False
+        for g in basic_groups:
+            raw_val = ws.cell(row=row, column=g['col_idx'] + 1).value
+            if raw_val is not None:
+                has_basic_data = True
                 break
-        if not has_data:
+
+        has_bean_data = False
+        for g in bean_groups:
+            bean_data, bean_has = read_bean_row(g['layout'], ws, row, bean_defs, enum_values, errors, sheet_name)
+            if bean_has:
+                has_bean_data = True
+                break
+
+        if not has_basic_data and not has_bean_data:
             continue
 
-        record = {}
-        for col_idx, field_name in enumerate(field_names):
-            raw_val = ws.cell(row=row, column=col_idx + 2).value
-            type_info = field_types[col_idx]
-            try:
-                record[field_name] = convert_value(raw_val, type_info)
-            except ValueError as e:
-                col_letter = chr(ord('A') + col_idx + 1)
-                errors.append(f"[错误] 表 {sheet_name} 第{row}行 {col_letter}列 ({field_name}): {e}")
-                record[field_name] = None
-        data_rows.append(record)
+        if has_basic_data:
+            if current_record is not None:
+                data_rows.append(current_record)
+            current_record = {}
+
+            for group in col_groups:
+                if group['kind'] == 'basic':
+                    col_idx = group['col_idx']
+                    raw_val = ws.cell(row=row, column=col_idx + 1).value
+                    type_info = group['type_info']
+                    if type_info['kind'] == 'enum':
+                        if raw_val is not None:
+                            enum_name = type_info['type']
+                            if enum_name not in enum_values:
+                                enum_values[enum_name] = set()
+                            enum_values[enum_name].add(str(raw_val).strip())
+                    elif type_info['kind'] == 'list' and type_info['element_type'] not in BASIC_TYPES:
+                        if raw_val is not None:
+                            enum_name = type_info['element_type']
+                            raw_str = str(raw_val).strip()
+                            if raw_str:
+                                if enum_name not in enum_values:
+                                    enum_values[enum_name] = set()
+                                parts = raw_str.split(type_info['separator'])
+                                for p in parts:
+                                    v = p.strip()
+                                    if v:
+                                        enum_values[enum_name].add(v)
+                    try:
+                        current_record[group['field_name']] = convert_value(raw_val, type_info)
+                    except ValueError as e:
+                        col_letter = chr(ord('A') + col_idx)
+                        errors.append(f"[错误] 表 {sheet_name} 第{row}行 {col_letter}列 ({group['field_name']}): {e}")
+                        current_record[group['field_name']] = None
+
+                elif group['kind'] == 'bean':
+                    bean_type_info = parse_type(group['type_str'], bean_defs)
+                    if bean_type_info['kind'] == 'list':
+                        current_record[group['field_name']] = []
+                    else:
+                        current_record[group['field_name']] = None
+
+        if current_record is not None:
+            for group in bean_groups:
+                bean_type_info = parse_type(group['type_str'], bean_defs)
+                bean_data, bean_has = read_bean_row(group['layout'], ws, row, bean_defs, enum_values, errors, sheet_name)
+                if not bean_has:
+                    continue
+
+                if bean_type_info['kind'] == 'list':
+                    if group['field_name'] not in current_record:
+                        current_record[group['field_name']] = []
+                    current_record[group['field_name']].append(bean_data)
+                else:
+                    current_record[group['field_name']] = bean_data
+
+    if current_record is not None:
+        data_rows.append(current_record)
 
     fields = []
-    for i, name in enumerate(field_names):
-        fields.append({
-            'name': name,
-            'type': str(ws.cell(row=2, column=i + 2).value or 'string').strip(),
-            'comment': field_comments[i]
-        })
+    for group in col_groups:
+        if group['kind'] == 'basic':
+            fields.append({
+                'name': group['field_name'],
+                'type': group['type_str'] or 'string',
+                'comment': group.get('comment', ''),
+            })
+        elif group['kind'] == 'bean':
+            fields.append({
+                'name': group['field_name'],
+                'type': group['type_str'],
+                'comment': '',
+            })
 
     return {
         'tableName': sheet_name,
@@ -378,6 +769,151 @@ def generate_enum_cs(enum_defs, auto_enum_values):
                 lines.append(f'    {val}{comma}')
             lines.append('}')
             lines.append('')
+
+    return '\n'.join(lines)
+
+
+def generate_bean_converter_cs(bean_defs):
+    all_bean_short_names = {fn.split('.')[-1]: fn for fn in bean_defs}
+
+    lines = []
+    lines.append('// 自动生成的代码 - 请勿手动修改')
+    lines.append('// Bean转换器：将Godot字典转换为Bean对象')
+    lines.append('')
+    lines.append('using Godot;')
+    lines.append('using System;')
+    lines.append('using System.Collections.Generic;')
+    lines.append('')
+    lines.append('public static class BeanConverter')
+    lines.append('{')
+
+    for full_name in sorted(bean_defs.keys()):
+        bean_def = bean_defs[full_name]
+        short_name = full_name.split('.')[-1]
+        lines.append(f'    public static {short_name} To{short_name}(Godot.Collections.Dictionary dict)')
+        lines.append(f'    {{')
+        lines.append(f'        var bean = new {short_name}();')
+        for f in bean_def['fields']:
+            ftype = f['type']
+            ftype_info = parse_type(ftype, bean_defs)
+            if ftype_info['kind'] == 'basic':
+                cs_read = {
+                    'int': 'AsInt32()',
+                    'float': 'AsSingle()',
+                    'double': 'AsDouble()',
+                    'string': 'AsString()',
+                    'bool': 'AsBool()',
+                }.get(ftype, 'AsString()')
+                lines.append(f'        if (dict.ContainsKey("{f["name"]}")) bean.{f["name"]} = dict["{f["name"]}"].{cs_read};')
+            elif ftype_info['kind'] == 'enum':
+                lines.append(f'        if (dict.ContainsKey("{f["name"]}")) bean.{f["name"]} = Enum.Parse<{ftype}>(dict["{f["name"]}"].AsString());')
+            elif ftype_info['kind'] == 'list':
+                elem = ftype_info['element_type']
+                elem_info = parse_type(elem, bean_defs)
+                if elem in {'int', 'float', 'double', 'string', 'bool'}:
+                    cs_conv = {
+                        'int': 'AsInt32()',
+                        'float': 'AsSingle()',
+                        'double': 'AsDouble()',
+                        'string': 'AsString()',
+                        'bool': 'AsBool()',
+                    }.get(elem, 'AsString()')
+                    lines.append(f'        if (dict.ContainsKey("{f["name"]}"))')
+                    lines.append(f'        {{')
+                    lines.append(f'            var arr = dict["{f["name"]}"].AsGodotArray();')
+                    lines.append(f'            var list = new List<{elem}>();')
+                    lines.append(f'            foreach (var item in arr) list.Add(item.{cs_conv});')
+                    lines.append(f'            bean.{f["name"]} = list;')
+                    lines.append(f'        }}')
+                elif elem_info['kind'] == 'bean':
+                    elem_short = elem.split('.')[-1] if '.' in elem else elem
+                    lines.append(f'        if (dict.ContainsKey("{f["name"]}"))')
+                    lines.append(f'        {{')
+                    lines.append(f'            var arr = dict["{f["name"]}"].AsGodotArray();')
+                    lines.append(f'            var list = new List<{elem_short}>();')
+                    lines.append(f'            foreach (var item in arr)')
+                    lines.append(f'                list.Add(To{elem_short}(item.AsGodotDictionary()));')
+                    lines.append(f'            bean.{f["name"]} = list;')
+                    lines.append(f'        }}')
+                else:
+                    lines.append(f'        if (dict.ContainsKey("{f["name"]}"))')
+                    lines.append(f'        {{')
+                    lines.append(f'            var arr = dict["{f["name"]}"].AsGodotArray();')
+                    lines.append(f'            var list = new List<string>();')
+                    lines.append(f'            foreach (var item in arr) list.Add(item.AsString());')
+                    lines.append(f'            bean.{f["name"]} = list;')
+                    lines.append(f'        }}')
+            elif ftype_info['kind'] == 'bean':
+                ref_short = ftype.split('.')[-1]
+                lines.append(f'        if (dict.ContainsKey("{f["name"]}")) bean.{f["name"]} = To{ref_short}(dict["{f["name"]}"].AsGodotDictionary());')
+        lines.append(f'        return bean;')
+        lines.append(f'    }}')
+        lines.append('')
+
+    lines.append('    public static T FromDict<T>(Godot.Collections.Dictionary dict) where T : new()')
+    lines.append('    {')
+    lines.append('        var typeName = typeof(T).Name;')
+    lines.append('        return typeName switch')
+    lines.append('        {')
+    for full_name in sorted(bean_defs.keys()):
+        short_name = full_name.split('.')[-1]
+        lines.append(f'            "{short_name}" => (T)(object)To{short_name}(dict),')
+    lines.append('            _ => new T()')
+    lines.append('        };')
+    lines.append('    }')
+    lines.append('}')
+    lines.append('')
+
+    return '\n'.join(lines)
+
+
+def generate_bean_cs(bean_defs):
+    all_bean_short_names = {fn.split('.')[-1]: fn for fn in bean_defs}
+
+    def resolve_cs_type(type_str):
+        type_info = parse_type(type_str, bean_defs)
+        if type_info['kind'] == 'basic':
+            return type_info['type']
+        elif type_info['kind'] == 'enum':
+            return type_info['type']
+        elif type_info['kind'] == 'bean':
+            ref = type_info['type']
+            if ref in bean_defs:
+                return ref.split('.')[-1]
+            if ref in all_bean_short_names:
+                return ref
+            return ref
+        elif type_info['kind'] == 'list':
+            elem = type_info['element_type']
+            elem_cs = resolve_cs_type(elem)
+            return f'List<{elem_cs}>'
+        return type_str
+
+    lines = []
+    lines.append('// 自动生成的代码 - 请勿手动修改')
+    lines.append('// 结构体定义：由导表工具根据 __bean__.xlsx 自动生成')
+    lines.append('')
+    lines.append('using Godot;')
+    lines.append('using System;')
+    lines.append('using System.Collections.Generic;')
+    lines.append('')
+
+    for full_name in sorted(bean_defs.keys()):
+        bean_def = bean_defs[full_name]
+        short_name = full_name.split('.')[-1]
+        lines.append(f'public class {short_name}')
+        lines.append('{')
+        for f in bean_def['fields']:
+            cs_type = resolve_cs_type(f['type'])
+            lines.append(f'    public {cs_type} {f["name"]};')
+        lines.append('')
+        lines.append(f'    public override string ToString()')
+        lines.append(f'    {{')
+        parts = [f'{{{f["name"]}}}' for f in bean_def['fields']]
+        lines.append(f'        return $"{short_name}({", ".join(parts)})";')
+        lines.append(f'    }}')
+        lines.append('}')
+        lines.append('')
 
     return '\n'.join(lines)
 
@@ -438,6 +974,34 @@ public class TableRecord
         var raw = GetRaw(name);
         if (raw is List<T> list)
             return list;
+        return new List<T>();
+    }
+
+    public T GetBean<T>(string name) where T : new()
+    {
+        var raw = GetRaw(name);
+        if (raw is T typed)
+            return typed;
+        if (raw is Godot.Collections.Dictionary dict)
+            return BeanConverter.FromDict<T>(dict);
+        return new T();
+    }
+
+    public List<T> GetBeanList<T>(string name) where T : new()
+    {
+        var raw = GetRaw(name);
+        if (raw is List<T> list)
+            return list;
+        if (raw is Godot.Collections.Array arr)
+        {
+            var result = new List<T>();
+            foreach (var item in arr)
+            {
+                if (item is Godot.Collections.Dictionary dict)
+                    result.Add(BeanConverter.FromDict<T>(dict));
+            }
+            return result;
+        }
         return new List<T>();
     }
 
@@ -531,13 +1095,26 @@ public class TableData
 
         if (typeInfo.Kind == "list")
         {
-            var arr = variant.AsGodotArray();
+            if (typeInfo.IsBeanList)
+            {
+                var arr = variant.AsGodotArray();
+                var result = new List<Godot.Collections.Dictionary>();
+                foreach (var item in arr)
+                    result.Add(item.AsGodotDictionary());
+                return result;
+            }
+            var arr2 = variant.AsGodotArray();
             var list = CreateTypedList(typeInfo.ElementType);
-            foreach (var item in arr)
+            foreach (var item in arr2)
             {
                 list.Add(ConvertSingleVariant(item, typeInfo.ElementType));
             }
             return list;
+        }
+
+        if (typeInfo.Kind == "bean")
+        {
+            return variant.AsGodotDictionary();
         }
 
         return ConvertSingleVariant(variant, typeInfo.Kind);
@@ -569,18 +1146,25 @@ public class TableData
         };
     }
 
-    private (string Kind, string ElementType) ParseFieldType(string fieldType)
+    private (string Kind, string ElementType, bool IsBeanList) ParseFieldType(string fieldType)
     {
         var match = System.Text.RegularExpressions.Regex.Match(
-            fieldType, @"^\\(list#sep=.\\),(\\w+)$");
+            fieldType, @"^\\(list#sep=.\\),(.+)$");
         if (match.Success)
-            return ("list", match.Groups[1].Value);
+        {
+            var elem = match.Groups[1].Value;
+            var isBean = elem.Contains(".") || !new[] { "int", "float", "double", "string", "bool" }.Contains(elem);
+            return ("list", elem, isBean);
+        }
 
         if (fieldType == "int" || fieldType == "float" || fieldType == "double"
             || fieldType == "string" || fieldType == "bool")
-            return (fieldType, "");
+            return (fieldType, "", false);
 
-        return (fieldType, "");
+        if (fieldType.Contains("."))
+            return ("bean", fieldType, false);
+
+        return (fieldType, "", false);
     }
 
     private void BuildIndexes()
@@ -591,7 +1175,7 @@ public class TableData
         foreach (var fieldName in _fieldTypes.Keys)
         {
             var typeInfo = ParseFieldType(_fieldTypes[fieldName]);
-            if (typeInfo.Kind == "list") continue;
+            if (typeInfo.Kind == "list" || typeInfo.Kind == "bean") continue;
 
             var index = new Dictionary<object, List<TableRecord>>();
             foreach (var record in _records)
@@ -748,19 +1332,24 @@ def main():
         sys.exit(0)
 
     enum_files = []
+    bean_files = []
     data_files = []
     for f in xlsx_files:
         name = os.path.splitext(os.path.basename(f))[0]
-        if name.startswith('__') and name.endswith('__'):
+        if name == '__bean__':
+            bean_files.append(f)
+        elif name.startswith('__') and name.endswith('__'):
             enum_files.append(f)
         else:
             data_files.append(f)
 
-    print(f"\n扫描到 {len(data_files)} 个数据表, {len(enum_files)} 个枚举表:")
+    print(f"\n扫描到 {len(data_files)} 个数据表, {len(enum_files)} 个枚举表, {len(bean_files)} 个结构体表:")
     for f in data_files:
         print(f"  - {os.path.relpath(f, ROOT_DIR)}")
     for f in enum_files:
         print(f"  - {os.path.relpath(f, ROOT_DIR)} (枚举表)")
+    for f in bean_files:
+        print(f"  - {os.path.relpath(f, ROOT_DIR)} (结构体表)")
 
     all_errors = []
     enum_defs = {}
@@ -777,6 +1366,25 @@ def main():
                 enum_defs[enum_name] = members
                 member_names = [m['name'] for m in members]
                 print(f"  枚举 {enum_name}: {', '.join(member_names)}")
+
+    bean_defs = {}
+
+    for xlsx_path in bean_files:
+        file_name = os.path.splitext(os.path.basename(xlsx_path))[0]
+        print(f"\n解析结构体表: {file_name}.xlsx")
+        defs, errors = parse_bean_xlsx(xlsx_path)
+        all_errors.extend(errors)
+        for full_name, bean_def in defs.items():
+            if full_name in bean_defs:
+                all_errors.append(f"[错误] Bean '{full_name}' 在多个结构体表中重复定义")
+            else:
+                bean_defs[full_name] = bean_def
+                field_names = [f['name'] for f in bean_def['fields']]
+                print(f"  结构体 {full_name}: {', '.join(field_names)}")
+
+    if bean_defs:
+        ref_errors = validate_bean_refs(bean_defs, enum_defs)
+        all_errors.extend(ref_errors)
 
     all_tables = []
     all_enum_values = {}
@@ -797,13 +1405,14 @@ def main():
             if ws.max_row < 4 or ws.max_column < 2:
                 continue
             first_cell = ws.cell(row=1, column=1).value
-            if first_cell and str(first_cell).strip() == '字段名称':
+            first_cell_str = str(first_cell).strip() if first_cell else ''
+            if first_cell_str.endswith('字段名称'):
                 data_sheets.append((sheet_name, ws))
 
         if len(data_sheets) == 1:
             table_name = file_name
             sheet_name, ws = data_sheets[0]
-            result = process_sheet(ws, table_name)
+            result = process_sheet(ws, table_name, bean_defs)
             if result:
                 all_tables.append(result)
                 all_errors.extend(result.get('errors', []))
@@ -815,7 +1424,7 @@ def main():
         elif len(data_sheets) > 1:
             for sheet_name, ws in data_sheets:
                 table_name = f"{file_name}_{sheet_name}"
-                result = process_sheet(ws, table_name)
+                result = process_sheet(ws, table_name, bean_defs)
                 if result:
                     all_tables.append(result)
                     all_errors.extend(result.get('errors', []))
@@ -851,7 +1460,7 @@ def main():
         print(_c("\n[警告] 未找到有效的数据表或枚举定义", _YELLOW))
         sys.exit(0)
 
-    for xlsx_path in enum_files:
+    for xlsx_path in enum_files + bean_files:
         stale_name = os.path.splitext(os.path.basename(xlsx_path))[0]
         stale_json = os.path.join(JSON_OUTPUT_DIR, f"{stale_name}.json")
         if os.path.exists(stale_json):
@@ -880,6 +1489,23 @@ def main():
         for enum_name, values in sorted(all_enum_values.items()):
             print(f"        枚举 {enum_name}: {', '.join(sorted(values))} (自动推断)")
 
+    if bean_defs:
+        bean_code = generate_bean_cs(bean_defs)
+        bean_path = os.path.join(CS_OUTPUT_DIR, '__bean__.cs')
+        with open(bean_path, 'w', encoding='utf-8') as f:
+            f.write(bean_code)
+        print(f"  [C#] {bean_path}")
+        for full_name in sorted(bean_defs.keys()):
+            short_name = full_name.split('.')[-1]
+            field_names = [f['name'] for f in bean_defs[full_name]['fields']]
+            print(f"        结构体 {short_name}: {', '.join(field_names)}")
+
+        converter_code = generate_bean_converter_cs(bean_defs)
+        converter_path = os.path.join(CS_OUTPUT_DIR, 'BeanConverter.cs')
+        with open(converter_path, 'w', encoding='utf-8') as f:
+            f.write(converter_code)
+        print(f"  [C#] {converter_path}")
+
     record_code = generate_table_record_cs()
     record_path = os.path.join(CS_OUTPUT_DIR, 'TableRecord.cs')
     with open(record_path, 'w', encoding='utf-8') as f:
@@ -899,10 +1525,11 @@ def main():
     print(f"  [C#] {manager_path}")
 
     print(f"\n{'=' * 60}")
-    print(_c(f"导出完成! 共处理 {len(all_tables)} 张表, {len(enum_defs)} 个显式枚举, {len(all_enum_values)} 个自动推断枚举", _GREEN))
+    print(_c(f"导出完成! 共处理 {len(all_tables)} 张表, {len(enum_defs)} 个枚举, {len(bean_defs)} 个结构体", _GREEN))
     print(f"JSON 输出: {os.path.relpath(JSON_OUTPUT_DIR, ROOT_DIR)}/")
     print(f"C# 输出:   {os.path.relpath(CS_OUTPUT_DIR, ROOT_DIR)}/")
-    print(f"  固定文件: __enum__.cs + TableRecord.cs + TableData.cs + TableManager.cs")
+    fixed_files = ['__enum__.cs', '__bean__.cs', 'BeanConverter.cs', 'TableRecord.cs', 'TableData.cs', 'TableManager.cs']
+    print(f"  固定文件: {' + '.join(fixed_files)}")
     print(f"{'=' * 60}")
 
 
@@ -913,4 +1540,8 @@ if __name__ == '__main__':
         pass
     finally:
         if getattr(sys, 'frozen', False):
-            input("\n按任意键关闭...")
+            import os
+            in_ide = any(key.startswith('VSCODE_') or key.startswith('IDEA_') or key == 'TERM_PROGRAM' for key in os.environ)
+            in_terminal = os.environ.get('WT_SESSION') or os.environ.get('TERM')
+            if not in_ide and not in_terminal:
+                input("\n按任意键关闭...")

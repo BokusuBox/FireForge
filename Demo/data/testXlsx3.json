@@ -22,9 +22,19 @@
       "comment": "技能池列表"
     },
     {
-      "name": "test",
-      "type": "string",
-      "comment": "测试"
+      "name": "item_cost",
+      "type": "Items.ItemCost",
+      "comment": ""
+    },
+    {
+      "name": "item_award",
+      "type": "(list#sep=|),Items.ItemAward",
+      "comment": ""
+    },
+    {
+      "name": "item_test",
+      "type": "(list#sep=|),Items.ItemTest",
+      "comment": ""
     }
   ],
   "data": [
@@ -36,7 +46,88 @@
         "Dagger"
       ],
       "skill_pool": 1,
-      "test": "测试配置1"
+      "item_cost": {
+        "id": 12,
+        "num": 10
+      },
+      "item_award": [
+        {
+          "id": 12,
+          "num": 10
+        },
+        {
+          "id": 13,
+          "num": 20
+        }
+      ],
+      "item_test": [
+        {
+          "id": 1,
+          "award": [
+            {
+              "id": 1,
+              "num": 11
+            }
+          ]
+        },
+        {
+          "award": [
+            {
+              "id": 2,
+              "num": 22
+            }
+          ]
+        },
+        {
+          "award": [
+            {
+              "id": 3,
+              "num": 33
+            }
+          ]
+        },
+        {
+          "award": [
+            {
+              "id": 4,
+              "num": 44
+            }
+          ]
+        },
+        {
+          "award": [
+            {
+              "id": 5,
+              "num": 55
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "award": [
+            {
+              "id": 12,
+              "num": 123
+            }
+          ]
+        },
+        {
+          "award": [
+            {
+              "id": 123,
+              "num": 1234
+            }
+          ]
+        },
+        {
+          "award": [
+            {
+              "id": 12345,
+              "num": 123456
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 2,
@@ -45,7 +136,51 @@
         "Dagger"
       ],
       "skill_pool": 111,
-      "test": "测试配置2"
+      "item_cost": {
+        "id": 13,
+        "num": 10
+      },
+      "item_award": [
+        {
+          "id": 12,
+          "num": 10
+        },
+        {
+          "id": 13,
+          "num": 100
+        },
+        {
+          "id": 14,
+          "num": 1000
+        }
+      ],
+      "item_test": [
+        {
+          "id": 1,
+          "award": [
+            {
+              "id": 1,
+              "num": 11
+            }
+          ]
+        },
+        {
+          "award": [
+            {
+              "id": 2,
+              "num": 22
+            }
+          ]
+        },
+        {
+          "award": [
+            {
+              "id": 3,
+              "num": 33
+            }
+          ]
+        }
+      ]
     }
   ]
 }

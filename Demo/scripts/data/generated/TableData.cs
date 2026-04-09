@@ -76,13 +76,26 @@ public class TableData
 
         if (typeInfo.Kind == "list")
         {
-            var arr = variant.AsGodotArray();
+            if (typeInfo.IsBeanList)
+            {
+                var arr = variant.AsGodotArray();
+                var result = new List<Godot.Collections.Dictionary>();
+                foreach (var item in arr)
+                    result.Add(item.AsGodotDictionary());
+                return result;
+            }
+            var arr2 = variant.AsGodotArray();
             var list = CreateTypedList(typeInfo.ElementType);
-            foreach (var item in arr)
+            foreach (var item in arr2)
             {
                 list.Add(ConvertSingleVariant(item, typeInfo.ElementType));
             }
             return list;
+        }
+
+        if (typeInfo.Kind == "bean")
+        {
+            return variant.AsGodotDictionary();
         }
 
         return ConvertSingleVariant(variant, typeInfo.Kind);
@@ -114,18 +127,25 @@ public class TableData
         };
     }
 
-    private (string Kind, string ElementType) ParseFieldType(string fieldType)
+    private (string Kind, string ElementType, bool IsBeanList) ParseFieldType(string fieldType)
     {
         var match = System.Text.RegularExpressions.Regex.Match(
-            fieldType, @"^\(list#sep=.\),(\w+)$");
+            fieldType, @"^\(list#sep=.\),(.+)$");
         if (match.Success)
-            return ("list", match.Groups[1].Value);
+        {
+            var elem = match.Groups[1].Value;
+            var isBean = elem.Contains(".") || !new[] { "int", "float", "double", "string", "bool" }.Contains(elem);
+            return ("list", elem, isBean);
+        }
 
         if (fieldType == "int" || fieldType == "float" || fieldType == "double"
             || fieldType == "string" || fieldType == "bool")
-            return (fieldType, "");
+            return (fieldType, "", false);
 
-        return (fieldType, "");
+        if (fieldType.Contains("."))
+            return ("bean", fieldType, false);
+
+        return (fieldType, "", false);
     }
 
     private void BuildIndexes()
@@ -136,7 +156,7 @@ public class TableData
         foreach (var fieldName in _fieldTypes.Keys)
         {
             var typeInfo = ParseFieldType(_fieldTypes[fieldName]);
-            if (typeInfo.Kind == "list") continue;
+            if (typeInfo.Kind == "list" || typeInfo.Kind == "bean") continue;
 
             var index = new Dictionary<object, List<TableRecord>>();
             foreach (var record in _records)

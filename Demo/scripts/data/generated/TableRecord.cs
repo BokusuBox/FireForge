@@ -56,6 +56,34 @@ public class TableRecord
         return new List<T>();
     }
 
+    public T GetBean<T>(string name) where T : new()
+    {
+        var raw = GetRaw(name);
+        if (raw is T typed)
+            return typed;
+        if (raw is Godot.Collections.Dictionary dict)
+            return BeanConverter.FromDict<T>(dict);
+        return new T();
+    }
+
+    public List<T> GetBeanList<T>(string name) where T : new()
+    {
+        var raw = GetRaw(name);
+        if (raw is List<T> list)
+            return list;
+        if (raw is Godot.Collections.Array arr)
+        {
+            var result = new List<T>();
+            foreach (var item in arr)
+            {
+                if (item is Godot.Collections.Dictionary dict)
+                    result.Add(BeanConverter.FromDict<T>(dict));
+            }
+            return result;
+        }
+        return new List<T>();
+    }
+
     public override string ToString()
     {
         var parts = new List<string>();

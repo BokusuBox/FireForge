@@ -84,13 +84,21 @@ public class TableData
                     result.Add(item.AsGodotDictionary());
                 return result;
             }
+            if (typeInfo.IsEnumList)
+            {
+                var arr = variant.AsGodotArray();
+                var list = new List<string>();
+                foreach (var item in arr)
+                    list.Add(item.AsString());
+                return list;
+            }
             var arr2 = variant.AsGodotArray();
-            var list = CreateTypedList(typeInfo.ElementType);
+            var list2 = CreateTypedList(typeInfo.ElementType);
             foreach (var item in arr2)
             {
-                list.Add(ConvertSingleVariant(item, typeInfo.ElementType));
+                list2.Add(ConvertSingleVariant(item, typeInfo.ElementType));
             }
-            return list;
+            return list2;
         }
 
         if (typeInfo.Kind == "bean")
@@ -127,25 +135,26 @@ public class TableData
         };
     }
 
-    private (string Kind, string ElementType, bool IsBeanList) ParseFieldType(string fieldType)
+    private (string Kind, string ElementType, bool IsBeanList, bool IsEnumList) ParseFieldType(string fieldType)
     {
         var match = System.Text.RegularExpressions.Regex.Match(
             fieldType, @"^\(list#sep=.\),(.+)$");
         if (match.Success)
         {
             var elem = match.Groups[1].Value;
-            var isBean = elem.Contains(".") || !new[] { "int", "float", "double", "string", "bool" }.Contains(elem);
-            return ("list", elem, isBean);
+            var isBean = elem.Contains(".");
+            var isEnum = !isBean && !new[] { "int", "float", "double", "string", "bool" }.Contains(elem);
+            return ("list", elem, isBean, isEnum);
         }
 
         if (fieldType == "int" || fieldType == "float" || fieldType == "double"
             || fieldType == "string" || fieldType == "bool")
-            return (fieldType, "", false);
+            return (fieldType, "", false, false);
 
         if (fieldType.Contains("."))
-            return ("bean", fieldType, false);
+            return ("bean", fieldType, false, false);
 
-        return (fieldType, "", false);
+        return (fieldType, "", false, false);
     }
 
     private void BuildIndexes()

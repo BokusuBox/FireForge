@@ -64,9 +64,9 @@
 - [x] 自动生成 C# 代码（`__enum__.cs` / `XxxRecord.cs` / `XxxTable.cs` / `TableManager.cs`）
 - [x] 枚举值从所有行（含##行）收集，确保枚举定义完整
 - [x] 待用户将 xlsx 中 D2 的 `enum` 改为 `WeaponType` 后重新导出验证
-- [ ] 导表工具新增强类型包装类生成：每张表自动生成 `XxxRow.cs`（行包装）和 `XxxTable.cs`（表包装）
-- [ ] `XxxRow` 内部持有 `TableRecord` 引用，通过属性暴露强类型访问（如 `Id` / `WeaponName` / `WeaponType`）
-- [ ] `XxxTable` 内部持有 `TableData` 引用，提供 `GetAll()` / `FindById()` 等强类型查询方法
+- [x] 导表工具新增强类型包装类生成：每张表自动生成 `XxxRow.cs`（行包装）和 `XxxTable.cs`（表包装）
+- [x] `XxxRow` 内部持有 `TableRecord` 引用，通过属性暴露强类型访问（如 `Id` / `WeaponName` / `WeaponType`）
+- [x] `XxxTable` 内部持有 `TableData` 引用，提供 `GetAll()` / `FindById()` 等强类型查询方法
 
 ### 1.1 项目目录结构搭建
 - [x] 创建 `tools/` 目录（导表工具）
@@ -181,3 +181,4 @@
 | 2026-04-09 | M1-1.0 | 支持动态表头行数：根据Bean嵌套深度计算 | 固定从Row 6开始读数据导致普通表数据丢失 | `header_rows = 3 + (1 + max_nesting)`，无Bean时从Row 4开始 |
 | 2026-04-09 | 架构 | 架构优化设计：6项优化规划写入文档 | 单机游戏缺少存档系统、数据访问层类型不安全、Manager间耦合风险 | 确定A强类型包装/B存档系统/C事件总线/D延迟加载/E GameRoot/F对象池，整合进M1里程碑 |
 | 2026-04-09 | 架构 | 将架构优化设计融入正式开发目标 | "架构优化"独立章节与M1里程碑内容重复，且标注混乱 | 删除独立章节，内容直接写入M1各子节，清理所有"→ 对应架构优化X"标注 |
+| 2026-04-10 | M1-1.0 | 实现强类型包装类自动生成（Tables.cs） | 枚举列表在TableData中被错误当作Bean列表处理 | 修复ParseFieldType新增IsEnumList标志，枚举列表存为List<string>，包装器用Enum.Parse转换 |

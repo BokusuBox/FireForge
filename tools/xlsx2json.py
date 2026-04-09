@@ -1156,13 +1156,21 @@ public class TableData
                     result.Add(item.AsGodotDictionary());
                 return result;
             }
+            if (typeInfo.IsEnumList)
+            {
+                var arr = variant.AsGodotArray();
+                var list = new List<string>();
+                foreach (var item in arr)
+                    list.Add(item.AsString());
+                return list;
+            }
             var arr2 = variant.AsGodotArray();
-            var list = CreateTypedList(typeInfo.ElementType);
+            var list2 = CreateTypedList(typeInfo.ElementType);
             foreach (var item in arr2)
             {
-                list.Add(ConvertSingleVariant(item, typeInfo.ElementType));
+                list2.Add(ConvertSingleVariant(item, typeInfo.ElementType));
             }
-            return list;
+            return list2;
         }
 
         if (typeInfo.Kind == "bean")
@@ -1199,25 +1207,26 @@ public class TableData
         };
     }
 
-    private (string Kind, string ElementType, bool IsBeanList) ParseFieldType(string fieldType)
+    private (string Kind, string ElementType, bool IsBeanList, bool IsEnumList) ParseFieldType(string fieldType)
     {
         var match = System.Text.RegularExpressions.Regex.Match(
             fieldType, @"^\\(list#sep=.\\),(.+)$");
         if (match.Success)
         {
             var elem = match.Groups[1].Value;
-            var isBean = elem.Contains(".") || !new[] { "int", "float", "double", "string", "bool" }.Contains(elem);
-            return ("list", elem, isBean);
+            var isBean = elem.Contains(".");
+            var isEnum = !isBean && !new[] { "int", "float", "double", "string", "bool" }.Contains(elem);
+            return ("list", elem, isBean, isEnum);
         }
 
         if (fieldType == "int" || fieldType == "float" || fieldType == "double"
             || fieldType == "string" || fieldType == "bool")
-            return (fieldType, "", false);
+            return (fieldType, "", false, false);
 
         if (fieldType.Contains("."))
-            return ("bean", fieldType, false);
+            return ("bean", fieldType, false, false);
 
-        return (fieldType, "", false);
+        return (fieldType, "", false, false);
     }
 
     private void BuildIndexes()
@@ -1368,6 +1377,178 @@ def scan_xlsx_files(data_dir):
             if f.endswith('.xlsx') and not f.startswith('~'):
                 xlsx_files.append(os.path.join(root, f))
     return xlsx_files
+
+
+def to_pascal_case(name):
+    if '_' in name:
+        return ''.join(part.capitalize() for part in name.split('_') if part)
+    return name[0].upper() + name[1:] if name else name
+
+
+def resolve_wrapper_cs_type(type_str, bean_defs):
+    type_info = parse_type(type_str, bean_defs)
+    if type_info['kind'] == 'basic':
+        return type_info['type']
+    elif type_info['kind'] == 'enum':
+        return type_info['type']
+    elif type_info['kind'] == 'bean':
+        ref = type_info['type']
+        all_bean_short = {fn.split('.')[-1]: fn for fn in bean_defs}
+        if ref in bean_defs:
+            return ref.split('.')[-1]
+        if ref in all_bean_short:
+            return ref
+        return ref
+    elif type_info['kind'] == 'list':
+        elem = type_info['element_type']
+        elem_cs = resolve_wrapper_cs_type(elem, bean_defs)
+        return f'List<{elem_cs}>'
+    return type_str
+
+
+def get_field_accessor(type_str, field_name, bean_defs):
+    type_info = parse_type(type_str, bean_defs)
+    if type_info['kind'] == 'basic':
+        accessor_map = {
+            'int': 'GetInt',
+            'float': 'GetFloat',
+            'double': 'GetDouble',
+            'string': 'GetString',
+            'bool': 'GetBool',
+        }
+        method = accessor_map.get(type_info['type'], 'GetString')
+        return f'_raw.{method}("{field_name}")'
+    elif type_info['kind'] == 'enum':
+        return f'_raw.GetEnum<{type_info["type"]}>("{field_name}")'
+    elif type_info['kind'] == 'bean':
+        ref = type_info['type']
+        short = ref.split('.')[-1] if '.' in ref else ref
+        return f'_raw.GetBean<{short}>("{field_name}")'
+    elif type_info['kind'] == 'list':
+        elem = type_info['element_type']
+        elem_info = parse_type(elem, bean_defs)
+        if elem in {'int', 'float', 'double', 'string', 'bool'}:
+            method_map = {
+                'int': 'GetIntList',
+                'float': 'GetFloatList',
+                'string': 'GetStringList',
+            }
+            method = method_map.get(elem)
+            if method:
+                return f'_raw.{method}("{field_name}")'
+            return f'_raw.GetList<{elem}>("{field_name}")'
+        elif elem_info['kind'] == 'enum':
+            return f'_raw.GetStringList("{field_name}").ConvertAll(s => Enum.Parse<{elem}>(s))'
+        elif elem_info['kind'] == 'bean':
+            short = elem.split('.')[-1] if '.' in elem else elem
+            return f'_raw.GetBeanList<{short}>("{field_name}")'
+        else:
+            return f'_raw.GetList<string>("{field_name}")'
+    return f'_raw.GetString("{field_name}")'
+
+
+def generate_tables_cs(all_tables, bean_defs):
+    lines = []
+    lines.append('// 自动生成的代码 - 请勿手动修改')
+    lines.append('// 强类型表包装：由导表工具根据数据表自动生成')
+    lines.append('')
+    lines.append('using Godot;')
+    lines.append('using System;')
+    lines.append('using System.Collections.Generic;')
+    lines.append('')
+
+    for table in all_tables:
+        table_name = table['tableName']
+        class_name = to_pascal_case(table_name)
+        fields = table['fields']
+
+        lines.append(f'public class {class_name}Row')
+        lines.append('{')
+        lines.append(f'    private readonly TableRecord _raw;')
+        lines.append(f'    public {class_name}Row(TableRecord raw) {{ _raw = raw; }}')
+        lines.append('')
+
+        for field in fields:
+            prop_name = to_pascal_case(field['name'])
+            cs_type = resolve_wrapper_cs_type(field['type'], bean_defs)
+            accessor = get_field_accessor(field['type'], field['name'], bean_defs)
+            lines.append(f'    public {cs_type} {prop_name} => {accessor};')
+
+        lines.append('}')
+        lines.append('')
+
+    for table in all_tables:
+        table_name = table['tableName']
+        class_name = to_pascal_case(table_name)
+        row_class = f'{class_name}Row'
+        fields = table['fields']
+
+        lines.append(f'public class {class_name}Table')
+        lines.append('{')
+        lines.append(f'    private readonly TableData _raw;')
+        lines.append(f'    private List<{row_class}> _rows;')
+        lines.append('')
+        lines.append(f'    public {class_name}Table(TableData raw) {{ _raw = raw; }}')
+        lines.append(f'    public int Count => _raw.Count;')
+        lines.append('')
+
+        lines.append(f'    public List<{row_class}> GetAll()')
+        lines.append(f'    {{')
+        lines.append(f'        if (_rows == null)')
+        lines.append(f'            _rows = _raw.GetAll().ConvertAll(r => new {row_class}(r));')
+        lines.append(f'        return _rows;')
+        lines.append(f'    }}')
+        lines.append('')
+
+        has_id = len(fields) > 0 and fields[0]['name'] == 'id' and fields[0]['type'] == 'int'
+        if has_id:
+            lines.append(f'    public {row_class} FindById(int id)')
+            lines.append(f'    {{')
+            lines.append(f'        var record = _raw.Find("id", id);')
+            lines.append(f'        return record != null ? new {row_class}(record) : null;')
+            lines.append(f'    }}')
+            lines.append('')
+
+        lines.append(f'    public {row_class} Find(string fieldName, object value)')
+        lines.append(f'    {{')
+        lines.append(f'        var record = _raw.Find(fieldName, value);')
+        lines.append(f'        return record != null ? new {row_class}(record) : null;')
+        lines.append(f'    }}')
+        lines.append('')
+
+        lines.append(f'    public List<{row_class}> FindAll(string fieldName, object value)')
+        lines.append(f'    {{')
+        lines.append(f'        return _raw.FindAll(fieldName, value).ConvertAll(r => new {row_class}(r));')
+        lines.append(f'    }}')
+
+        lines.append('}')
+        lines.append('')
+
+    lines.append('public static class Tables')
+    lines.append('{')
+
+    for table in all_tables:
+        table_name = table['tableName']
+        class_name = to_pascal_case(table_name)
+        table_class = f'{class_name}Table'
+        prop_name = class_name
+
+        lines.append(f'    private static {table_class} _{table_name};')
+        lines.append(f'    public static {table_class} {prop_name}')
+        lines.append(f'    {{')
+        lines.append(f'        get')
+        lines.append(f'        {{')
+        lines.append(f'            if (_{table_name} == null)')
+        lines.append(f'                _{table_name} = new {table_class}(TableManager.Instance.GetTable("{table_name}"));')
+        lines.append(f'            return _{table_name};')
+        lines.append(f'        }}')
+        lines.append(f'    }}')
+        lines.append('')
+
+    lines.append('}')
+    lines.append('')
+
+    return '\n'.join(lines)
 
 
 def main():
@@ -1577,11 +1758,22 @@ def main():
         f.write(manager_code)
     print(f"  [C#] {manager_path}")
 
+    if all_tables:
+        tables_code = generate_tables_cs(all_tables, bean_defs)
+        tables_path = os.path.join(CS_OUTPUT_DIR, 'Tables.cs')
+        with open(tables_path, 'w', encoding='utf-8') as f:
+            f.write(tables_code)
+        print(f"  [C#] {tables_path}")
+        for table in all_tables:
+            class_name = to_pascal_case(table['tableName'])
+            field_names = [f['name'] for f in table['fields']]
+            print(f"        {class_name}Row / {class_name}Table: {', '.join(field_names)}")
+
     print(f"\n{'=' * 60}")
     print(_c(f"导出完成! 共处理 {len(all_tables)} 张表, {len(enum_defs)} 个枚举, {len(bean_defs)} 个结构体", _GREEN))
     print(f"JSON 输出: {os.path.relpath(JSON_OUTPUT_DIR, ROOT_DIR)}/")
     print(f"C# 输出:   {os.path.relpath(CS_OUTPUT_DIR, ROOT_DIR)}/")
-    fixed_files = ['__enum__.cs', '__bean__.cs', 'BeanConverter.cs', 'TableRecord.cs', 'TableData.cs', 'TableManager.cs']
+    fixed_files = ['__enum__.cs', '__bean__.cs', 'BeanConverter.cs', 'TableRecord.cs', 'TableData.cs', 'TableManager.cs', 'Tables.cs']
     print(f"  固定文件: {' + '.join(fixed_files)}")
     print(f"{'=' * 60}")
 

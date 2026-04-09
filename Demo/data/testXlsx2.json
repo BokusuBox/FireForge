@@ -4,23 +4,41 @@
     {
       "name": "id",
       "type": "int",
-      "comment": "2"
+      "comment": "id"
     },
     {
       "name": "weapon_name",
       "type": "string",
-      "comment": "仪式匕首"
+      "comment": "武器名称"
     },
     {
       "name": "weapon_type",
       "type": "(list#sep=|),WeaponType",
-      "comment": "Dagger"
+      "comment": "武器类型列表"
     },
     {
       "name": "skill_pool",
       "type": "int",
-      "comment": "111"
+      "comment": "技能池列表"
     }
   ],
-  "data": []
+  "data": [
+    {
+      "id": 1,
+      "weapon_name": "单手剑",
+      "weapon_type": [
+        "Sword",
+        "Dagger"
+      ],
+      "skill_pool": 1
+    },
+    {
+      "id": 2,
+      "weapon_name": "仪式匕首",
+      "weapon_type": [
+        "Dagger"
+      ],
+      "skill_pool": 111
+    }
+  ]
 }

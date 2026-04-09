@@ -438,7 +438,26 @@ def bean_col_span(bean_full_name, bean_defs):
     return total
 
 
-def build_bean_col_layout(bean_full_name, bean_defs, start_col, row4, row5):
+def bean_nesting_depth(bean_full_name, bean_defs):
+    bean_def = bean_defs.get(bean_full_name)
+    if bean_def is None:
+        short_map = {fn.split('.')[-1]: fn for fn in bean_defs}
+        bean_def = bean_defs.get(short_map.get(bean_full_name, ''))
+    if bean_def is None:
+        return 0
+    max_depth = 0
+    for field in bean_def['fields']:
+        field_type_info = parse_type(field['type'], bean_defs)
+        if field_type_info['kind'] == 'bean':
+            depth = 1 + bean_nesting_depth(field_type_info['type'], bean_defs)
+            max_depth = max(max_depth, depth)
+        elif field_type_info['kind'] == 'list' and field_type_info['element_type'] not in BASIC_TYPES:
+            depth = 1 + bean_nesting_depth(field_type_info['element_type'], bean_defs)
+            max_depth = max(max_depth, depth)
+    return max_depth
+
+
+def build_bean_col_layout(bean_full_name, bean_defs, start_col, type_annotation_rows, comment_row, current_depth=0):
     bean_def = bean_defs.get(bean_full_name)
     if bean_def is None:
         short_map = {fn.split('.')[-1]: fn for fn in bean_defs}
@@ -450,7 +469,7 @@ def build_bean_col_layout(bean_full_name, bean_defs, start_col, row4, row5):
     for field in bean_def['fields']:
         field_type_info = parse_type(field['type'], bean_defs)
         if field_type_info['kind'] == 'bean':
-            sub_layout = build_bean_col_layout(field_type_info['type'], bean_defs, col_offset, row4, row5)
+            sub_layout = build_bean_col_layout(field_type_info['type'], bean_defs, col_offset, type_annotation_rows, comment_row, current_depth + 1)
             layout.append({
                 'kind': 'bean_field',
                 'name': field['name'],
@@ -460,7 +479,7 @@ def build_bean_col_layout(bean_full_name, bean_defs, start_col, row4, row5):
             })
             col_offset += sum(sl.get('col_count', 1) for sl in sub_layout)
         elif field_type_info['kind'] == 'list' and field_type_info['element_type'] not in BASIC_TYPES:
-            sub_layout = build_bean_col_layout(field_type_info['element_type'], bean_defs, col_offset, row4, row5)
+            sub_layout = build_bean_col_layout(field_type_info['element_type'], bean_defs, col_offset, type_annotation_rows, comment_row, current_depth + 1)
             layout.append({
                 'kind': 'list_bean_field',
                 'name': field['name'],
@@ -470,8 +489,12 @@ def build_bean_col_layout(bean_full_name, bean_defs, start_col, row4, row5):
             })
             col_offset += sum(sl.get('col_count', 1) for sl in sub_layout)
         else:
-            sub_name = row4[col_offset] if col_offset < len(row4) else ''
-            sub_comment = row5[col_offset] if col_offset < len(row5) else ''
+            if current_depth < len(type_annotation_rows):
+                type_row = type_annotation_rows[current_depth]
+                sub_name = type_row[col_offset] if col_offset < len(type_row) else ''
+            else:
+                sub_name = ''
+            sub_comment = comment_row[col_offset] if col_offset < len(comment_row) else ''
             if not sub_name:
                 sub_name = field['name']
             layout.append({
@@ -522,7 +545,7 @@ def read_bean_row(layout, ws, row, bean_defs, enum_values, errors, sheet_name):
 
 
 def process_sheet(ws, sheet_name, bean_defs=None):
-    if ws.max_row < 4 or ws.max_column < 2:
+    if ws.max_row < 3 or ws.max_column < 2:
         return None
 
     if bean_defs is None:
@@ -540,15 +563,39 @@ def process_sheet(ws, sheet_name, bean_defs=None):
         val = ws.cell(row=2, column=col).value
         row2.append(str(val).strip() if val is not None else '')
 
-    row4 = []
-    for col in range(1, ws.max_column + 1):
-        val = ws.cell(row=4, column=col).value
-        row4.append(str(val).strip() if val is not None else '')
+    max_nesting = 0
+    i = 1
+    while i < len(row1):
+        header = row1[i]
+        if header and header.startswith('*'):
+            bean_type_str = row2[i] if i < len(row2) else ''
+            bean_type_info = parse_type(bean_type_str, bean_defs)
+            if bean_type_info['kind'] == 'bean':
+                bean_full_name = bean_type_info['type']
+            elif bean_type_info['kind'] == 'list' and bean_type_info['element_type'] not in BASIC_TYPES:
+                bean_full_name = bean_type_info['element_type']
+            else:
+                bean_full_name = bean_type_str
+            depth = bean_nesting_depth(bean_full_name, bean_defs)
+            max_nesting = max(max_nesting, depth)
+        i += 1
 
-    row5 = []
+    header_rows = 3 + (1 + max_nesting) if max_nesting > 0 else 3
+    data_start_row = header_rows + 1
+    comment_row_idx = header_rows
+
+    type_annotation_rows = []
+    for r in range(3, comment_row_idx):
+        row_data = []
+        for col in range(1, ws.max_column + 1):
+            val = ws.cell(row=r, column=col).value
+            row_data.append(str(val).strip() if val is not None else '')
+        type_annotation_rows.append(row_data)
+
+    comment_row = []
     for col in range(1, ws.max_column + 1):
-        val = ws.cell(row=5, column=col).value
-        row5.append(str(val).strip() if val is not None else '')
+        val = ws.cell(row=comment_row_idx, column=col).value
+        comment_row.append(str(val).strip() if val is not None else '')
 
     col_groups = []
     i = 1
@@ -581,7 +628,7 @@ def process_sheet(ws, sheet_name, bean_defs=None):
                 continue
 
             col_count = bean_col_span(bean_full_name, bean_defs)
-            layout = build_bean_col_layout(bean_full_name, bean_defs, i, row4, row5)
+            layout = build_bean_col_layout(bean_full_name, bean_defs, i, type_annotation_rows, comment_row)
 
             col_groups.append({
                 'kind': 'bean',
@@ -602,7 +649,7 @@ def process_sheet(ws, sheet_name, bean_defs=None):
                 if elem not in BASIC_TYPES and not VALID_IDENTIFIER_RE.match(elem):
                     errors.append(f"[错误] 表 {sheet_name} 第2行第{i+1}列: list元素类型 '{elem}' 不是合法标识符")
 
-            comment = row5[i] if i < len(row5) else ''
+            comment = comment_row[i] if i < len(comment_row) else ''
             col_groups.append({
                 'kind': 'basic',
                 'field_name': header,
@@ -623,10 +670,16 @@ def process_sheet(ws, sheet_name, bean_defs=None):
     basic_groups = [g for g in col_groups if g['kind'] == 'basic']
     bean_groups = [g for g in col_groups if g['kind'] == 'bean']
 
-    for row in range(6, ws.max_row + 1):
+    for row in range(data_start_row, ws.max_row + 1):
         marker = ws.cell(row=row, column=1).value
         if marker is not None and str(marker).strip() == '##':
-            continue
+            has_other_data = False
+            for col in range(2, ws.max_column + 1):
+                if ws.cell(row=row, column=col).value is not None:
+                    has_other_data = True
+                    break
+            if not has_other_data:
+                continue
 
         has_basic_data = False
         for g in basic_groups:

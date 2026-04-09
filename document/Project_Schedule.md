@@ -9,6 +9,43 @@
 | 战斗模式 | 实时自动战斗（俯视角 Top-down） |
 | 数据配置 | JSON 外部数据表（后续配套 Excel→JSON 转换工具） |
 | 视角 | 2D 俯视角 |
+| 存档策略 | 单机本地存档（JSON 序列化） |
+
+---
+
+## 架构模式
+
+本项目采用 **数据驱动 + 管理器单例 + 模块化分层** 架构：
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    UI 层 (scripts/ui/)               │
+│          铁砧界面 / 三选一弹窗 / 战斗HUD / 订单面板    │
+├─────────────────────────────────────────────────────┤
+│              管理器层 (Autoload 单例)                  │
+│  GameRoot (唯一入口)                                  │
+│  ├─ ResourceManager  ├─ ReputationManager            │
+│  ├─ CraftingManager  ├─ CombatManager                │
+│  └─ ShopManager      └─ SaveManager                  │
+├─────────────────────────────────────────────────────┤
+│              业务引擎层 (按模块隔离)                    │
+│  AffixRoller | ThresholdAggregator | SkillEngine     │
+│  CombatAI | OrderGenerator                           │
+├─────────────────────────────────────────────────────┤
+│              数据访问层 (自动生成)                      │
+│  TableManager → TableData → 强类型包装 (XxxRow)       │
+│  BeanConverter + __bean__.cs + __enum__.cs           │
+├─────────────────────────────────────────────────────┤
+│              数据源层 (外部配置)                        │
+│  .xlsx → (Python xlsx2json) → .json                 │
+└─────────────────────────────────────────────────────┘
+```
+
+**核心原则**：
+- 配置与逻辑分离：所有数值走 Excel → JSON → 通用表加载器，代码只管逻辑
+- 管理器单例协调：各系统通过 GameRoot 统一管理，Autoload 仅设 GameRoot 一个入口
+- 模块高内聚低耦合：锻造/战斗/集市/订单各自闭环，通过 EventBus 信号通信
+- 通用化代码生成：固定 C# 文件 + Bean 扩展 + 强类型包装，新增表零手写代码
 
 ---
 
@@ -27,13 +64,16 @@
 - [x] 自动生成 C# 代码（`__enum__.cs` / `XxxRecord.cs` / `XxxTable.cs` / `TableManager.cs`）
 - [x] 枚举值从所有行（含##行）收集，确保枚举定义完整
 - [x] 待用户将 xlsx 中 D2 的 `enum` 改为 `WeaponType` 后重新导出验证
+- [ ] 导表工具新增强类型包装类生成：每张表自动生成 `XxxRow.cs`（行包装）和 `XxxTable.cs`（表包装）
+- [ ] `XxxRow` 内部持有 `TableRecord` 引用，通过属性暴露强类型访问（如 `Id` / `WeaponName` / `WeaponType`）
+- [ ] `XxxTable` 内部持有 `TableData` 引用，提供 `GetAll()` / `FindById()` 等强类型查询方法
 
 ### 1.1 项目目录结构搭建
 - [x] 创建 `tools/` 目录（导表工具）
 - [x] 创建 `data/` 目录（xlsx 源文件，按系统分子文件夹）
 - [x] 创建 `demo/data/` 目录（JSON 输出）
 - [x] 创建 `demo/scripts/data/generated/` 目录（C# 自动生成代码）
-- [ ] 创建 `scripts/core/` 目录及全局管理器骨架
+- [ ] 创建 `scripts/core/` 目录
 - [ ] 创建 `scripts/crafting/` 目录
 - [ ] 创建 `scripts/combat/` 目录
 - [ ] 创建 `scripts/shop/` 目录
@@ -54,10 +94,19 @@
 - [ ] `AffixRoller.cs` - 词缀抽取漏斗引擎（iLvl过滤 → 同组去重 → 权重Roll点 → 三选一生成）
 - [ ] 创建最小词缀库 JSON（3-4个词缀组 × 3个Tier）
 
-### 1.4 全局管理器
-- [ ] `GameManager.cs` - 游戏全局状态管理（Autoload 单例）
-- [ ] `ResourceManager.cs` - 金币/通货/素材资源管理
-- [ ] `ReputationManager.cs` - 声望等级管理
+### 1.4 全局管理器（GameRoot 架构）
+- [ ] `GameRoot.cs` - 唯一 Autoload 入口，内部管理所有子 Manager 生命周期与初始化顺序
+- [ ] `EventBus.cs` - 全局事件总线，Manager 间通过 Godot Signal 解耦通信（信号名采用名词+过去式动词语义）
+- [ ] `ISaveable.cs` - 存档接口，统一 `SaveKey` / `Serialize()` / `Deserialize()` 契约
+- [ ] `SaveManager.cs` - 存档管理器，中心化管理所有 ISaveable 的序列化/反序列化/多存档位
+- [ ] `ResourceManager.cs` - 金币/通货/素材资源管理（实现 ISaveable）
+- [ ] `ReputationManager.cs` - 声望等级管理（实现 ISaveable）
+- [ ] `ObjectPool.cs` - 通用对象池（支持 `Get()` / `Return()` / `Prewarm()`，M3 战斗系统前置）
+
+### 1.5 数据访问层
+- [ ] `TableManager` 改为延迟加载模式：首次 `GetTable()` 时才加载 JSON，可选 `PreloadTables()` 预加载核心表
+- [ ] `TableManager` 新增 `GetTable<T>()` 泛型方法，返回强类型表包装
+- [ ] 业务代码统一走强类型包装，禁止直接使用 `TableRecord.GetXxx()`
 
 ---
 
@@ -125,3 +174,10 @@
 | 2026-04-09 | M1-1.0 | 完成导表工具开发与验证 | xlsx中D2为`enum`（C#关键字），需改为`WeaponType` | 用户已更新xlsx，重新导出验证通过 |
 | 2026-04-09 | M1-1.0 | 重构C#代码生成：合并为通用TableRecord+TableData | 每张表独立Record/Table类导致脚本膨胀 | 重构为通用字典模式，固定4个C#文件 |
 | 2026-04-09 | M1-1.0 | 验证多文件夹xlsx扫描+exe打包 | - | data/test/和data/test2/两个文件夹均正确扫描 |
+| 2026-04-09 | M1-1.0 | 新增Bean/结构体支持：`__bean__.xlsx`特殊表 | - | 解析Bean定义、验证引用、生成`__bean__.cs`和`BeanConverter.cs` |
+| 2026-04-09 | M1-1.0 | 修复JSON输出Bug：空行产生null记录 | Bean续行（基本列全空）被当作独立记录 | 引入主行/续行模式，基本列有值时开始新记录 |
+| 2026-04-09 | M1-1.0 | 修复Bean列跨度计算错误 | `bean_col_count=len(fields)`未递归展开嵌套Bean | 新增`bean_col_span()`递归计算，`build_bean_col_layout()`递归构建 |
+| 2026-04-09 | M1-1.0 | 修复`parse_bean_xlsx`丢失同行字段 | full_name和第一个字段在同一行时被跳过 | 创建新Bean后检查同行是否有字段数据 |
+| 2026-04-09 | M1-1.0 | 支持动态表头行数：根据Bean嵌套深度计算 | 固定从Row 6开始读数据导致普通表数据丢失 | `header_rows = 3 + (1 + max_nesting)`，无Bean时从Row 4开始 |
+| 2026-04-09 | 架构 | 架构优化设计：6项优化规划写入文档 | 单机游戏缺少存档系统、数据访问层类型不安全、Manager间耦合风险 | 确定A强类型包装/B存档系统/C事件总线/D延迟加载/E GameRoot/F对象池，整合进M1里程碑 |
+| 2026-04-09 | 架构 | 将架构优化设计融入正式开发目标 | "架构优化"独立章节与M1里程碑内容重复，且标注混乱 | 删除独立章节，内容直接写入M1各子节，清理所有"→ 对应架构优化X"标注 |

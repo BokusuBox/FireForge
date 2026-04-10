@@ -1,5 +1,7 @@
 # AI 开发者协作指南 (AI Collaboration & Workflow Rules)
 
+> **项目架构文档**：[document/Architecture.md](document/Architecture.md) — 记录所有脚本的定位、功能与依赖关系，每当完成一个新脚本时必须同步更新。
+
 你好，AI 助手。作为参与本 Godot 游戏项目的核心协作者，在执行任何指令前，你必须严格阅读并遵守以下开发规范与工作流机制：
 
 ## 一、 代码质量与开发声明 (Code Quality Declaration)

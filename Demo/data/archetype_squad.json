@@ -18,8 +18,8 @@
     },
     {
       "name": "role_label",
-      "type": "string",
-      "comment": "定位标签"
+      "type": "SquadRole",
+      "comment": "队友定位(枚举)"
     },
     {
       "name": "count",
@@ -32,70 +32,70 @@
       "id": 1,
       "squad_pool_id": 1,
       "adventurer_id": 1,
-      "role_label": "main_dps",
+      "role_label": "MainDps",
       "count": 1
     },
     {
       "id": 2,
       "squad_pool_id": 2,
       "adventurer_id": 1,
-      "role_label": "main_dps",
+      "role_label": "MainDps",
       "count": 1
     },
     {
       "id": 3,
       "squad_pool_id": 2,
       "adventurer_id": 4,
-      "role_label": "support",
+      "role_label": "Support",
       "count": 1
     },
     {
       "id": 4,
       "squad_pool_id": 3,
       "adventurer_id": 2,
-      "role_label": "ranger_dps",
+      "role_label": "RangerDps",
       "count": 2
     },
     {
       "id": 5,
       "squad_pool_id": 4,
       "adventurer_id": 3,
-      "role_label": "mage_dps",
+      "role_label": "MageDps",
       "count": 2
     },
     {
       "id": 6,
       "squad_pool_id": 5,
       "adventurer_id": 1,
-      "role_label": "main_dps",
+      "role_label": "MainDps",
       "count": 1
     },
     {
       "id": 7,
       "squad_pool_id": 5,
       "adventurer_id": 2,
-      "role_label": "ranger_dps",
+      "role_label": "RangerDps",
       "count": 1
     },
     {
       "id": 8,
       "squad_pool_id": 6,
       "adventurer_id": 1,
-      "role_label": "main_dps",
+      "role_label": "MainDps",
       "count": 1
     },
     {
       "id": 9,
       "squad_pool_id": 6,
       "adventurer_id": 3,
-      "role_label": "mage_dps",
+      "role_label": "MageDps",
       "count": 1
     },
     {
       "id": 10,
       "squad_pool_id": 6,
       "adventurer_id": 4,
-      "role_label": "support",
+      "role_label": "Support",
       "count": 1
     }
   ]

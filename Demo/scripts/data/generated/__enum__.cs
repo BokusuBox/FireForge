@@ -71,6 +71,21 @@ public enum Gender
     Female = 3  // 女性
 }
 
+public enum MaterialTag
+{
+    Weapon = 1,  // 武器类底材
+    Sword = 2,  // 剑类底材
+    Dagger = 3,  // 匕首类底材
+    Wand = 4,  // 法杖类底材
+    Staff = 5,  // 长杖类底材
+    BodyArmor = 6,  // 胸甲类底材
+    Helmet = 7,  // 头盔类底材
+    Gloves = 8,  // 手套类底材
+    Boots = 9,  // 靴子类底材
+    Ring = 10,  // 戒指类底材
+    Amulet = 11  // 项链类底材
+}
+
 public enum OrderDifficulty
 {
     Easy = 1,  // 简单
@@ -94,6 +109,16 @@ public enum OrderVariant
     SquadDrill = 4  // 实战编队演练
 }
 
+public enum SceneType
+{
+    Arena = 1,  // 竞技场-标准战斗
+    Fortress = 2,  // 堡垒-防守战
+    Endurance = 3,  // 耐力试炼-生存挑战
+    Swarm = 4,  // 虫群-大量敌人
+    Boss = 5,  // Boss战-单体强敌
+    Dungeon = 6  // 地下城-综合挑战
+}
+
 public enum SkillTrigger
 {
     OnCooldown = 1,  // 冷却完毕自动释放
@@ -106,14 +131,80 @@ public enum SkillTrigger
 
 public enum SkillType
 {
-    Active = 1,  // 主动技能
-    Passive = 2  // 质变被动
+    Active = 1,  // 主动
+    Passive = 2  // 被动
 }
 
-public enum WeaponType
+public enum SquadRole
 {
-    Dagger = 1,  // 小刀
-    Sword = 2,  // 剑
-    Wand = 3,  // 魔杖
-    Staff = 4  // 法杖
+    MainDps = 1,  // 主输出
+    RangerDps = 2,  // 远程输出
+    MageDps = 3,  // 法师输出
+    Tank = 4,  // 坦克
+    Support = 5,  // 辅助
+    Healer = 6  // 治疗
+}
+
+public enum StatType
+{
+    Attack = 1,  // 攻击力-基础点伤
+    Armor = 2,  // 护甲-物理减伤
+    MaxHp = 3,  // 最大生命值
+    AttackSpeed = 4,  // 攻击速度-动作速率
+    MoveSpeed = 5,  // 移动速度
+    CritRate = 6,  // 暴击率
+    CritDmgMultiplier = 7,  // 暴击伤害倍率
+    CooldownReduction = 8,  // 冷却缩减
+    IncreasedDamage = 9,  // A类增伤(同类相加)
+    MoreDamage = 10,  // B类独立乘区伤害
+    IncreasedArmor = 11,  // A类增防(同类相加)
+    MoreArmor = 12,  // B类独立乘区防御
+    HealPower = 13,  // 治疗强度
+    MoreHeal = 14,  // B类独立乘区治疗
+    FireResist = 15,  // 火焰抗性
+    IceResist = 16,  // 冰霜抗性
+    PoisonResist = 17,  // 毒素抗性
+    DotDamage = 18,  // 持续伤害
+    AoERadius = 19  // AOE范围
+}
+
+public enum TraitEffectType
+{
+    StatMultiplier = 1,  // 属性乘区(B类独立)
+    StatAdditive = 2,  // 属性加成(A类相加)
+    ForceCrit = 3,  // 强制暴击
+    Immunity = 4,  // 免疫/无敌
+    Dot = 5,  // 持续伤害
+    Heal = 6,  // 治疗
+    Shield = 7,  // 护盾
+    Aura = 8,  // 光环(全队)
+    Summon = 9,  // 召唤
+    Dispel = 10  // 驱散
+}
+
+public enum TraitTriggerType
+{
+    Always = 1,  // 常驻被动
+    OnCombatStart = 2,  // 战斗开始
+    OnCrit = 3,  // 暴击时
+    OnHit = 4,  // 命中时
+    OnKill = 5,  // 击杀时
+    OnDamageTaken = 6,  // 受伤时
+    OnLowHp = 7,  // 低血量时
+    OnHeal = 8,  // 治疗时
+    OnDeath = 9  // 死亡时
+}
+
+public enum TraitType
+{
+    IronWill = 1,  // 坚韧意志-受伤减免
+    FirstStrike = 2,  // 先手优势-开局爆发
+    ArcaneAffinity = 3,  // 奥术亲和-法术增幅
+    LethalStrike = 4,  // 致命一击-必定暴击
+    CritMultiplier = 5,  // 暴伤翻倍-暴击伤害乘区
+    ArmorCounter = 6,  // 破甲反击-受击触发反击
+    Undying = 7,  // 不死之身-低血量无敌护盾
+    PoisonBlade = 8,  // 毒刃-命中附加毒伤
+    Regeneration = 9,  // 生命涌泉-持续回复
+    WarCry = 10  // 战吼-全队增伤光环
 }

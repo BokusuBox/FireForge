@@ -16,9 +16,21 @@ public class AdventurerData
     public float CritRate { get; set; }
     public float CritDmgMultiplier { get; set; }
     public float Cdr { get; set; }
-    // [暂代] 后续建 trait.xlsx 后改为 List<int> 引用特质ID
-    public List<string> PassiveTraits { get; set; } = new();
+    public List<int> PassiveTraitIds { get; set; } = new();
     public Dictionary<EquipmentSlot, EquipmentData> EquippedItems { get; set; } = new();
+
+    public float GetAggregatedStat(StatType type)
+    {
+        float total = 0f;
+        foreach (var eq in EquippedItems.Values)
+        {
+            foreach (var affix in eq.Prefixes)
+                total += affix.GetStat(type);
+            foreach (var affix in eq.Suffixes)
+                total += affix.GetStat(type);
+        }
+        return total;
+    }
 
     public int TotalAttack
     {
@@ -26,16 +38,8 @@ public class AdventurerData
         {
             int bonus = 0;
             foreach (var eq in EquippedItems.Values)
-            {
                 bonus += eq.BaseAttack;
-                foreach (var affix in eq.Prefixes)
-                    if (affix.StatModifiers.TryGetValue("attack", out var v))
-                        bonus += v;
-                foreach (var affix in eq.Suffixes)
-                    if (affix.StatModifiers.TryGetValue("attack", out var v))
-                        bonus += v;
-            }
-            return BaseAttack + bonus;
+            return BaseAttack + bonus + (int)GetAggregatedStat(StatType.Attack);
         }
     }
 
@@ -45,16 +49,8 @@ public class AdventurerData
         {
             int bonus = 0;
             foreach (var eq in EquippedItems.Values)
-            {
                 bonus += eq.BaseArmor;
-                foreach (var affix in eq.Prefixes)
-                    if (affix.StatModifiers.TryGetValue("armor", out var v))
-                        bonus += v;
-                foreach (var affix in eq.Suffixes)
-                    if (affix.StatModifiers.TryGetValue("armor", out var v))
-                        bonus += v;
-            }
-            return BaseArmor + bonus;
+            return BaseArmor + bonus + (int)GetAggregatedStat(StatType.Armor);
         }
     }
 
@@ -90,18 +86,8 @@ public class AdventurerData
             CritRate = row.CritRate,
             CritDmgMultiplier = row.CritDmgMultiplier,
             Cdr = row.Cdr,
+            PassiveTraitIds = new List<int>(row.PassiveTrait),
         };
-
-        var raw = row.PassiveTrait;
-        if (!string.IsNullOrEmpty(raw))
-        {
-            foreach (var trait in raw.Split('|'))
-            {
-                var t = trait.Trim();
-                if (!string.IsNullOrEmpty(t))
-                    data.PassiveTraits.Add(t);
-            }
-        }
 
         return data;
     }

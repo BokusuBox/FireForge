@@ -22,7 +22,7 @@ public class AdventurerRow
     public float CritRate => _raw.GetFloat("crit_rate");
     public float CritDmgMultiplier => _raw.GetFloat("crit_dmg_multiplier");
     public float Cdr => _raw.GetFloat("cdr");
-    public string PassiveTrait => _raw.GetString("passive_trait");
+    public List<int> PassiveTrait => _raw.GetIntList("passive_trait");
 }
 
 public class ArchetypeRow
@@ -35,10 +35,10 @@ public class ArchetypeRow
     public ArchetypeDimension Dimension => _raw.GetEnum<ArchetypeDimension>("dimension");
     public int MinDifficulty => _raw.GetInt("min_difficulty");
     public int MaxDifficulty => _raw.GetInt("max_difficulty");
-    public string BaseMaterialTags => _raw.GetString("base_material_tags");
+    public List<MaterialTag> BaseMaterialTags => _raw.GetStringList("base_material_tags").ConvertAll(s => Enum.Parse<MaterialTag>(s));
     public string CorrectAffixGroups => _raw.GetString("correct_affix_groups");
     public int SquadPoolId => _raw.GetInt("squad_pool_id");
-    public string SceneAnchor => _raw.GetString("scene_anchor");
+    public SceneType SceneAnchor => _raw.GetEnum<SceneType>("scene_anchor");
     public float EnemyIlvlScale => _raw.GetFloat("enemy_ilvl_scale");
     public int DefaultTier => _raw.GetInt("default_tier");
     public int BaseDamage => _raw.GetInt("base_damage");
@@ -53,7 +53,7 @@ public class ArchetypeSquadRow
     public int Id => _raw.GetInt("id");
     public int SquadPoolId => _raw.GetInt("squad_pool_id");
     public int AdventurerId => _raw.GetInt("adventurer_id");
-    public string RoleLabel => _raw.GetString("role_label");
+    public SquadRole RoleLabel => _raw.GetEnum<SquadRole>("role_label");
     public int Count => _raw.GetInt("count");
 }
 
@@ -136,6 +136,24 @@ public class SkillRow
     public SkillTrigger Trigger => _raw.GetEnum<SkillTrigger>("trigger");
     public string ThresholdLevels => _raw.GetString("threshold_levels");
     public float BaseCooldown => _raw.GetFloat("base_cooldown");
+    public string Description => _raw.GetString("description");
+}
+
+public class TraitRow
+{
+    private readonly TableRecord _raw;
+    public TraitRow(TableRecord raw) { _raw = raw; }
+
+    public int Id => _raw.GetInt("id");
+    public TraitType TraitType => _raw.GetEnum<TraitType>("trait_type");
+    public string TraitName => _raw.GetString("trait_name");
+    public TraitTriggerType TriggerType => _raw.GetEnum<TraitTriggerType>("trigger_type");
+    public string TriggerCondition => _raw.GetString("trigger_condition");
+    public TraitEffectType EffectType => _raw.GetEnum<TraitEffectType>("effect_type");
+    public StatType StatType => _raw.GetEnum<StatType>("stat_type");
+    public float Value => _raw.GetFloat("value");
+    public float Duration => _raw.GetFloat("duration");
+    public int Priority => _raw.GetInt("priority");
     public string Description => _raw.GetString("description");
 }
 
@@ -403,6 +421,39 @@ public class SkillTable
     }
 }
 
+public class TraitTable
+{
+    private readonly TableData _raw;
+    private List<TraitRow> _rows;
+
+    public TraitTable(TableData raw) { _raw = raw; }
+    public int Count => _raw.Count;
+
+    public List<TraitRow> GetAll()
+    {
+        if (_rows == null)
+            _rows = _raw.GetAll().ConvertAll(r => new TraitRow(r));
+        return _rows;
+    }
+
+    public TraitRow FindById(int id)
+    {
+        var record = _raw.Find("id", id);
+        return record != null ? new TraitRow(record) : null;
+    }
+
+    public TraitRow Find(string fieldName, object value)
+    {
+        var record = _raw.Find(fieldName, value);
+        return record != null ? new TraitRow(record) : null;
+    }
+
+    public List<TraitRow> FindAll(string fieldName, object value)
+    {
+        return _raw.FindAll(fieldName, value).ConvertAll(r => new TraitRow(r));
+    }
+}
+
 public static class Tables
 {
     private static AdventurerTable _adventurer;
@@ -490,6 +541,17 @@ public static class Tables
             if (_skill == null)
                 _skill = new SkillTable(TableManager.Instance.GetTable("skill"));
             return _skill;
+        }
+    }
+
+    private static TraitTable _trait;
+    public static TraitTable Trait
+    {
+        get
+        {
+            if (_trait == null)
+                _trait = new TraitTable(TableManager.Instance.GetTable("trait"));
+            return _trait;
         }
     }
 

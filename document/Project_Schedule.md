@@ -88,21 +88,20 @@
 - [x] `OrderData.cs` + `ArchetypeData.cs` - 订单数据模型 + 流派模板库（3表拆分：archetype/archetype_squad/order）+ `order.xlsx` 配表
 - [x] `CurrencyData.cs` - 通货数据模型（名称/AP消耗/效果类型枚举/工作室等级闸门）+ `currency.xlsx` 配表
 - [x] `SkillData.cs` - 技能数据模型（技能名/类型/触发条件/阈值坎/冷却）+ `skill.xlsx` 配表
-- [ ] `TraitData.cs` - 被动特质数据模型（触发条件+效果类型分离，当前adventurer.passive_trait为string占位）
-  - 预设表结构：id / trait_name / trigger_type(枚举: always/on_crit/on_low_hp/on_kill等) / effect_type(枚举: damage_multiplier/armor_bonus/heal/shield等) / effect_value / description
-  - 战斗系统按 trigger_type 分发触发时机，按 effect_type 分发效果逻辑
-  - adventurer.xlsx 的 passive_trait 字段后续改为 `(list#sep=|),int` 引用特质ID
+- [x] `TraitData.cs` - 被动特质数据模型（触发条件+效果类型分离）
+  - 已创建 `trait.xlsx` 配表（字段：id, trait_type, trait_name, trigger_type, trigger_condition, effect_type, stat_type, value, duration, priority, description）
+  - 已创建 `TraitData.cs` 运行时模型（从 TraitRow 构建，包含效果数值/乘区归属/触发条件）
+  - 已创建 `TraitContext.cs` - 特质触发上下文（提供hp/maxhp/combat_time等变量）
+  - 已创建 `TraitConditionParser.cs` - 条件表达式解析器（支持变量:操作符:值格式，支持&/|组合）
+  - `AdventurerData.PassiveTraitIds` 已改为 `List<int>` 引用特质ID
+  - 战斗公式集成待后续开发
 
 #### ⚠️ 暂代字段清单（后续需替换/完善）
 
 | 所属模型 | 字段 | 当前类型 | 暂代原因 | 后续方案 |
 |----------|------|----------|----------|----------|
-| AdventurerData | `PassiveTraits` | `List<string>` | 特质系统未建表，仅存名称字符串 | 建 trait.xlsx 后改为 `List<int>` 引用特质ID |
-| ArchetypeData | `BaseMaterialTags` | `List<string>` | 标签系统未建枚举，仅存自由文本标签 | 后续建 MaterialTag 枚举或引用底材标签表 |
 | ArchetypeData | `CorrectAffixGroups` | `List<int>` | 引用词缀组ID，但组ID格式为101/102等，与affix表group_id字段对齐待验证 | 锻造引擎开发时验证关联查询 |
-| ArchetypeData | `SceneAnchor` | `string` | 场景/地下城配置系统未建表，仅存场景锚定标识 | 后续建 dungeon.xlsx 场景配置表后改为 int 引用 |
 | ArchetypeData | `CalculateTargetScore()` | 运行时方法 | 公式系数(Tier乘区0.3步进/iLvl缩放)为初版估算 | 战斗系统数值平衡时调参 |
-| ArchetypeSquad | `role_label` | `string` | 队友定位标签未枚举化 | 后续建 SquadRole 枚举 |
 | SkillData | `ThresholdLevels` | `List<int>` (从string解析) | 阈值坎效果描述仅在description字段文字说明 | 后续建 skill_threshold.xlsx 拆分每个坎的具体效果数值 |
 | SkillData | `Description` | `string` | 技能效果描述为纯文本，战斗系统无法直接解析 | 后续拆分为结构化效果字段 |
 
@@ -124,6 +123,14 @@
 - [ ] `TableManager` 改为延迟加载模式：首次 `GetTable()` 时才加载 JSON，可选 `PreloadTables()` 预加载核心表
 - [ ] `TableManager` 新增 `GetTable<T>()` 泛型方法，返回强类型表包装
 - [ ] 业务代码统一走强类型包装，禁止直接使用 `TableRecord.GetXxx()`
+
+### 1.6 特质配表（Trait System）
+- [x] `trait.xlsx` - 特质配表（字段：id, trait_type, trait_name, trigger_type, trigger_condition, effect_type, stat_type, value, duration, priority, description）
+- [x] `TraitData.cs` - 特质运行时模型（从 TraitRow 构建，包含效果数值/乘区归属/触发条件）
+- [x] `TraitContext.cs` - 特质触发上下文（提供hp/maxhp/combat_time等变量）
+- [x] `TraitConditionParser.cs` - 条件表达式解析器（支持变量:操作符:值格式，支持&/|组合）
+- [x] `AdventurerData.PassiveTraitIds` 从 `List<TraitType>` 改为 `List<int>` 引用特质ID
+- [ ] 战斗公式集成：特质效果按 multiplier_category 分发到 POE 乘区
 
 ---
 
@@ -199,3 +206,5 @@
 | 2026-04-09 | 架构 | 架构优化设计：6项优化规划写入文档 | 单机游戏缺少存档系统、数据访问层类型不安全、Manager间耦合风险 | 确定A强类型包装/B存档系统/C事件总线/D延迟加载/E GameRoot/F对象池，整合进M1里程碑 |
 | 2026-04-09 | 架构 | 将架构优化设计融入正式开发目标 | "架构优化"独立章节与M1里程碑内容重复，且标注混乱 | 删除独立章节，内容直接写入M1各子节，清理所有"→ 对应架构优化X"标注 |
 | 2026-04-10 | M1-1.0 | 实现强类型包装类自动生成（Tables.cs） | 枚举列表在TableData中被错误当作Bean列表处理 | 修复ParseFieldType新增IsEnumList标志，枚举列表存为List<string>，包装器用Enum.Parse转换 |
+| 2026-04-10 | M1-1.6 | 完成特质系统（Trait System）开发 | trait.xlsx表头格式不正确导致未生成 | 修复表头格式（##字段名称行），成功导出TraitRow/TraitTable |
+| 2026-04-10 | M1-1.6 | 创建TraitContext/TraitConditionParser | - | 支持复杂条件表达式（hp:<30&enemyhp:>50），支持&/|逻辑组合 |

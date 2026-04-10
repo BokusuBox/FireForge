@@ -63,8 +63,8 @@
     },
     {
       "name": "passive_trait",
-      "type": "string",
-      "comment": "独特被动特质"
+      "type": "(list#sep=|),int",
+      "comment": "被动特质ID列表(|分隔)"
     }
   ],
   "data": [
@@ -81,7 +81,9 @@
       "crit_rate": 0.05,
       "crit_dmg_multiplier": 1.5,
       "cdr": 0.0,
-      "passive_trait": "坚韧意志"
+      "passive_trait": [
+        1
+      ]
     },
     {
       "id": 2,
@@ -96,7 +98,9 @@
       "crit_rate": 0.1,
       "crit_dmg_multiplier": 1.5,
       "cdr": 0.0,
-      "passive_trait": "先手优势"
+      "passive_trait": [
+        2
+      ]
     },
     {
       "id": 3,
@@ -111,7 +115,9 @@
       "crit_rate": 0.05,
       "crit_dmg_multiplier": 2.0,
       "cdr": 0.1,
-      "passive_trait": "奥术亲和"
+      "passive_trait": [
+        3
+      ]
     },
     {
       "id": 4,
@@ -126,7 +132,9 @@
       "crit_rate": 0.2,
       "crit_dmg_multiplier": 2.0,
       "cdr": 0.0,
-      "passive_trait": "致命一击"
+      "passive_trait": [
+        4
+      ]
     },
     {
       "id": 5,
@@ -141,7 +149,10 @@
       "crit_rate": 0.05,
       "crit_dmg_multiplier": 1.5,
       "cdr": 0.05,
-      "passive_trait": "坚韧意志|破甲反击"
+      "passive_trait": [
+        1,
+        6
+      ]
     },
     {
       "id": 6,
@@ -156,7 +167,10 @@
       "crit_rate": 0.25,
       "crit_dmg_multiplier": 2.5,
       "cdr": 0.0,
-      "passive_trait": "致命一击|暴伤翻倍"
+      "passive_trait": [
+        4,
+        5
+      ]
     }
   ]
 }

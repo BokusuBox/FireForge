@@ -1,0 +1,192 @@
+{
+  "tableName": "trait",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int",
+      "comment": "特质ID"
+    },
+    {
+      "name": "trait_type",
+      "type": "TraitType",
+      "comment": "特质类型枚举"
+    },
+    {
+      "name": "trait_name",
+      "type": "string",
+      "comment": "特质名称"
+    },
+    {
+      "name": "trigger_type",
+      "type": "TraitTriggerType",
+      "comment": "触发时机"
+    },
+    {
+      "name": "trigger_condition",
+      "type": "string",
+      "comment": "触发条件表达式"
+    },
+    {
+      "name": "effect_type",
+      "type": "TraitEffectType",
+      "comment": "效果类型"
+    },
+    {
+      "name": "stat_type",
+      "type": "StatType",
+      "comment": "影响属性(可选)"
+    },
+    {
+      "name": "value",
+      "type": "float",
+      "comment": "效果数值"
+    },
+    {
+      "name": "duration",
+      "type": "float",
+      "comment": "持续时间(秒)"
+    },
+    {
+      "name": "priority",
+      "type": "int",
+      "comment": "触发优先级"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "comment": "描述"
+    }
+  ],
+  "data": [
+    {
+      "id": 1,
+      "trait_type": "IronWill",
+      "trait_name": "坚韧意志",
+      "trigger_type": "Always",
+      "trigger_condition": null,
+      "effect_type": "StatMultiplier",
+      "stat_type": "Armor",
+      "value": 1.2,
+      "duration": 0.0,
+      "priority": 0,
+      "description": "受伤减免20%"
+    },
+    {
+      "id": 2,
+      "trait_type": "FirstStrike",
+      "trait_name": "先手优势",
+      "trigger_type": "OnCombatStart",
+      "trigger_condition": "combat_time:<3",
+      "effect_type": "StatMultiplier",
+      "stat_type": "Attack",
+      "value": 1.5,
+      "duration": 5.0,
+      "priority": 0,
+      "description": "战斗开始5秒内攻击+50%"
+    },
+    {
+      "id": 3,
+      "trait_type": "ArcaneAffinity",
+      "trait_name": "奥术亲和",
+      "trigger_type": "Always",
+      "trigger_condition": null,
+      "effect_type": "StatMultiplier",
+      "stat_type": "IncreasedDamage",
+      "value": 0.3,
+      "duration": 0.0,
+      "priority": 0,
+      "description": "A类增伤+30%"
+    },
+    {
+      "id": 4,
+      "trait_type": "LethalStrike",
+      "trait_name": "致命一击",
+      "trigger_type": "Always",
+      "trigger_condition": null,
+      "effect_type": "ForceCrit",
+      "stat_type": null,
+      "value": 1.0,
+      "duration": 0.0,
+      "priority": 0,
+      "description": "攻击必定暴击"
+    },
+    {
+      "id": 5,
+      "trait_type": "CritMultiplier",
+      "trait_name": "暴伤翻倍",
+      "trigger_type": "OnCrit",
+      "trigger_condition": null,
+      "effect_type": "StatMultiplier",
+      "stat_type": "CritDmgMultiplier",
+      "value": 2.0,
+      "duration": 0.0,
+      "priority": 0,
+      "description": "暴击时暴伤翻倍"
+    },
+    {
+      "id": 6,
+      "trait_type": "ArmorCounter",
+      "trait_name": "破甲反击",
+      "trigger_type": "OnDamageTaken",
+      "trigger_condition": null,
+      "effect_type": "StatMultiplier",
+      "stat_type": "Attack",
+      "value": 0.5,
+      "duration": 0.0,
+      "priority": 0,
+      "description": "受伤后反击伤害+50%"
+    },
+    {
+      "id": 7,
+      "trait_type": "Undying",
+      "trait_name": "不死之身",
+      "trigger_type": "OnLowHp",
+      "trigger_condition": "hp:<30",
+      "effect_type": "Immunity",
+      "stat_type": null,
+      "value": 1.0,
+      "duration": 3.0,
+      "priority": 100,
+      "description": "血量低于30%时无敌3秒"
+    },
+    {
+      "id": 8,
+      "trait_type": "PoisonBlade",
+      "trait_name": "毒刃",
+      "trigger_type": "OnHit",
+      "trigger_condition": null,
+      "effect_type": "Dot",
+      "stat_type": null,
+      "value": 10.0,
+      "duration": 5.0,
+      "priority": 0,
+      "description": "命中附加10点毒伤持续5秒"
+    },
+    {
+      "id": 9,
+      "trait_type": "Regeneration",
+      "trait_name": "生命涌泉",
+      "trigger_type": "Always",
+      "trigger_condition": null,
+      "effect_type": "Heal",
+      "stat_type": null,
+      "value": 5.0,
+      "duration": 0.0,
+      "priority": 0,
+      "description": "每秒回复5点生命"
+    },
+    {
+      "id": 10,
+      "trait_type": "WarCry",
+      "trait_name": "战吼",
+      "trigger_type": "OnKill",
+      "trigger_condition": null,
+      "effect_type": "Aura",
+      "stat_type": "Attack",
+      "value": 0.2,
+      "duration": 10.0,
+      "priority": 0,
+      "description": "击杀后全队攻击+20%持续10秒"
+    }
+  ]
+}

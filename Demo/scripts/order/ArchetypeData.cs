@@ -9,13 +9,11 @@ public class ArchetypeData
     public ArchetypeDimension Dimension { get; set; }
     public int MinDifficulty { get; set; }
     public int MaxDifficulty { get; set; }
-    // [暂代] 后续建 MaterialTag 枚举或底材标签表
-    public List<string> BaseMaterialTags { get; set; } = new();
+    public List<MaterialTag> BaseMaterialTags { get; set; } = new();
     // [暂代] 锻造引擎开发时验证与affix表group_id的关联查询
     public List<int> CorrectAffixGroups { get; set; } = new();
     public int SquadPoolId { get; set; }
-    // [暂代] 后续建 dungeon.xlsx 场景配置表后改为 int 引用
-    public string SceneAnchor { get; set; } = "";
+    public SceneType SceneAnchor { get; set; }
     public float EnemyIlvlScale { get; set; }
     public int DefaultTier { get; set; }
     public int BaseDamage { get; set; }
@@ -42,6 +40,7 @@ public class ArchetypeData
             Dimension = row.Dimension,
             MinDifficulty = row.MinDifficulty,
             MaxDifficulty = row.MaxDifficulty,
+            BaseMaterialTags = new List<MaterialTag>(row.BaseMaterialTags),
             SquadPoolId = row.SquadPoolId,
             SceneAnchor = row.SceneAnchor,
             EnemyIlvlScale = row.EnemyIlvlScale,
@@ -49,17 +48,6 @@ public class ArchetypeData
             BaseDamage = row.BaseDamage,
             Description = row.Description,
         };
-
-        var tags = row.BaseMaterialTags;
-        if (!string.IsNullOrEmpty(tags))
-        {
-            foreach (var tag in tags.Split('|'))
-            {
-                var t = tag.Trim();
-                if (!string.IsNullOrEmpty(t))
-                    data.BaseMaterialTags.Add(t);
-            }
-        }
 
         var groups = row.CorrectAffixGroups;
         if (!string.IsNullOrEmpty(groups))

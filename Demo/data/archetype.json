@@ -28,8 +28,8 @@
     },
     {
       "name": "base_material_tags",
-      "type": "string",
-      "comment": "底材倾向标签(|分隔)"
+      "type": "(list#sep=|),MaterialTag",
+      "comment": "底材标签(枚举|分隔)"
     },
     {
       "name": "correct_affix_groups",
@@ -43,8 +43,8 @@
     },
     {
       "name": "scene_anchor",
-      "type": "string",
-      "comment": "场景锚定"
+      "type": "SceneType",
+      "comment": "场景锚定(枚举)"
     },
     {
       "name": "enemy_ilvl_scale",
@@ -74,10 +74,13 @@
       "dimension": "PureDamage",
       "min_difficulty": 1,
       "max_difficulty": 3,
-      "base_material_tags": "weapon|sword",
+      "base_material_tags": [
+        "Weapon",
+        "Sword"
+      ],
       "correct_affix_groups": "101",
       "squad_pool_id": 1,
-      "scene_anchor": "arena",
+      "scene_anchor": "Arena",
       "enemy_ilvl_scale": 1.0,
       "default_tier": 5,
       "base_damage": 5000,
@@ -89,10 +92,13 @@
       "dimension": "CritBurst",
       "min_difficulty": 2,
       "max_difficulty": 5,
-      "base_material_tags": "weapon|dagger",
+      "base_material_tags": [
+        "Weapon",
+        "Dagger"
+      ],
       "correct_affix_groups": "101|103",
       "squad_pool_id": 2,
-      "scene_anchor": "arena",
+      "scene_anchor": "Arena",
       "enemy_ilvl_scale": 1.2,
       "default_tier": 3,
       "base_damage": 8000,
@@ -104,10 +110,13 @@
       "dimension": "TankSurvival",
       "min_difficulty": 1,
       "max_difficulty": 4,
-      "base_material_tags": "body_armor|helmet",
+      "base_material_tags": [
+        "BodyArmor",
+        "Helmet"
+      ],
       "correct_affix_groups": "102|104",
       "squad_pool_id": 3,
-      "scene_anchor": "fortress",
+      "scene_anchor": "Fortress",
       "enemy_ilvl_scale": 1.5,
       "default_tier": 3,
       "base_damage": 3000,
@@ -119,10 +128,13 @@
       "dimension": "SupportHeal",
       "min_difficulty": 2,
       "max_difficulty": 6,
-      "base_material_tags": "weapon|staff",
+      "base_material_tags": [
+        "Weapon",
+        "Staff"
+      ],
       "correct_affix_groups": "105|106",
       "squad_pool_id": 4,
-      "scene_anchor": "endurance",
+      "scene_anchor": "Endurance",
       "enemy_ilvl_scale": 1.3,
       "default_tier": 2,
       "base_damage": 4000,
@@ -134,10 +146,13 @@
       "dimension": "DotSpread",
       "min_difficulty": 3,
       "max_difficulty": 7,
-      "base_material_tags": "weapon|wand",
+      "base_material_tags": [
+        "Weapon",
+        "Wand"
+      ],
       "correct_affix_groups": "107|108",
       "squad_pool_id": 5,
-      "scene_anchor": "swarm",
+      "scene_anchor": "Swarm",
       "enemy_ilvl_scale": 1.8,
       "default_tier": 1,
       "base_damage": 6000,
@@ -149,10 +164,14 @@
       "dimension": "HybridComposite",
       "min_difficulty": 4,
       "max_difficulty": 8,
-      "base_material_tags": "weapon|sword|body_armor",
+      "base_material_tags": [
+        "Weapon",
+        "Sword",
+        "BodyArmor"
+      ],
       "correct_affix_groups": "101|104|105",
       "squad_pool_id": 6,
-      "scene_anchor": "boss",
+      "scene_anchor": "Boss",
       "enemy_ilvl_scale": 2.0,
       "default_tier": 1,
       "base_damage": 10000,

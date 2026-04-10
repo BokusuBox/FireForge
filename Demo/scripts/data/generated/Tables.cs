@@ -125,6 +125,19 @@ public class OrderRow
     public string Description => _raw.GetString("description");
 }
 
+public class ReputationRow
+{
+    private readonly TableRecord _raw;
+    public ReputationRow(TableRecord raw) { _raw = raw; }
+
+    public int Id => _raw.GetInt("id");
+    public int Level => _raw.GetInt("level");
+    public string LevelName => _raw.GetString("level_name");
+    public int Threshold => _raw.GetInt("threshold");
+    public List<OrderType> OrderUnlock => _raw.GetStringList("order_unlock").ConvertAll(s => Enum.Parse<OrderType>(s));
+    public string Description => _raw.GetString("description");
+}
+
 public class SkillRow
 {
     private readonly TableRecord _raw;
@@ -388,6 +401,39 @@ public class OrderTable
     }
 }
 
+public class ReputationTable
+{
+    private readonly TableData _raw;
+    private List<ReputationRow> _rows;
+
+    public ReputationTable(TableData raw) { _raw = raw; }
+    public int Count => _raw.Count;
+
+    public List<ReputationRow> GetAll()
+    {
+        if (_rows == null)
+            _rows = _raw.GetAll().ConvertAll(r => new ReputationRow(r));
+        return _rows;
+    }
+
+    public ReputationRow FindById(int id)
+    {
+        var record = _raw.Find("id", id);
+        return record != null ? new ReputationRow(record) : null;
+    }
+
+    public ReputationRow Find(string fieldName, object value)
+    {
+        var record = _raw.Find(fieldName, value);
+        return record != null ? new ReputationRow(record) : null;
+    }
+
+    public List<ReputationRow> FindAll(string fieldName, object value)
+    {
+        return _raw.FindAll(fieldName, value).ConvertAll(r => new ReputationRow(r));
+    }
+}
+
 public class SkillTable
 {
     private readonly TableData _raw;
@@ -530,6 +576,17 @@ public static class Tables
             if (_order == null)
                 _order = new OrderTable(TableManager.Instance.GetTable("order"));
             return _order;
+        }
+    }
+
+    private static ReputationTable _reputation;
+    public static ReputationTable Reputation
+    {
+        get
+        {
+            if (_reputation == null)
+                _reputation = new ReputationTable(TableManager.Instance.GetTable("reputation"));
+            return _reputation;
         }
     }
 

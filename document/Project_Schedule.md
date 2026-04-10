@@ -111,13 +111,13 @@
 - [ ] 创建最小词缀库 JSON（3-4个词缀组 × 3个Tier）
 
 ### 1.4 全局管理器（GameRoot 架构）
-- [ ] `GameRoot.cs` - 唯一 Autoload 入口，内部管理所有子 Manager 生命周期与初始化顺序
-- [ ] `EventBus.cs` - 全局事件总线，Manager 间通过 Godot Signal 解耦通信（信号名采用名词+过去式动词语义）
-- [ ] `ISaveable.cs` - 存档接口，统一 `SaveKey` / `Serialize()` / `Deserialize()` 契约
-- [ ] `SaveManager.cs` - 存档管理器，中心化管理所有 ISaveable 的序列化/反序列化/多存档位
-- [ ] `ResourceManager.cs` - 金币/通货/素材资源管理（实现 ISaveable）
-- [ ] `ReputationManager.cs` - 声望等级管理（实现 ISaveable）
-- [ ] `ObjectPool.cs` - 通用对象池（支持 `Get()` / `Return()` / `Prewarm()`，M3 战斗系统前置）
+- [x] `GameRoot.cs` - 唯一 Autoload 入口，内部管理所有子 Manager 生命周期与初始化顺序
+- [x] `EventBus.cs` - 全局事件总线，基于字典的发布/订阅模式 + GameEvents 常量集合
+- [x] `ISaveable.cs` - 存档接口，统一 `SaveKey` / `Serialize()` / `Deserialize()` 契约（Godot Dictionary）
+- [x] `SaveManager.cs` - 存档管理器，中心化管理所有 ISaveable 的序列化/反序列化/多存档位
+- [x] `ResourceManager.cs` - 金币/通货资源管理（实现 ISaveable，变更自动广播事件）
+- [x] `ReputationManager.cs` - 声望等级管理（实现 ISaveable，从 reputation.xlsx 配表加载阈值/等级名/订单解锁）
+- [x] `ObjectPool.cs` - 泛型对象池（支持 PackedScene/new T() 双模式，预热/容量上限/进程控制）
 
 ### 1.5 数据访问层
 - [ ] `TableManager` 改为延迟加载模式：首次 `GetTable()` 时才加载 JSON，可选 `PreloadTables()` 预加载核心表
@@ -208,3 +208,4 @@
 | 2026-04-10 | M1-1.0 | 实现强类型包装类自动生成（Tables.cs） | 枚举列表在TableData中被错误当作Bean列表处理 | 修复ParseFieldType新增IsEnumList标志，枚举列表存为List<string>，包装器用Enum.Parse转换 |
 | 2026-04-10 | M1-1.6 | 完成特质系统（Trait System）开发 | trait.xlsx表头格式不正确导致未生成 | 修复表头格式（##字段名称行），成功导出TraitRow/TraitTable |
 | 2026-04-10 | M1-1.6 | 创建TraitContext/TraitConditionParser | - | 支持复杂条件表达式（hp:<30&enemyhp:>50），支持&/|逻辑组合 |
+| 2026-04-10 | M1-1.4 | 完成全局管理器（GameRoot架构）开发 | - | EventBus发布订阅+ISaveable存档接口+SaveManager多存档位+ResourceManager金币通货+ReputationManager声望阶梯+ObjectPool泛型对象池+GameRoot统一入口 |

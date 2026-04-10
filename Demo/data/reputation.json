@@ -1,0 +1,151 @@
+{
+  "tableName": "reputation",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int",
+      "comment": "ID"
+    },
+    {
+      "name": "level",
+      "type": "int",
+      "comment": "声望等级"
+    },
+    {
+      "name": "level_name",
+      "type": "string",
+      "comment": "等级名称"
+    },
+    {
+      "name": "threshold",
+      "type": "int",
+      "comment": "升级所需声望值"
+    },
+    {
+      "name": "order_unlock",
+      "type": "(list#sep=|),OrderType",
+      "comment": "解锁订单类型列表"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "comment": "描述"
+    }
+  ],
+  "data": [
+    {
+      "id": 1,
+      "level": 0,
+      "level_name": "无名铁匠",
+      "threshold": 0,
+      "order_unlock": [
+        "WalkIn"
+      ],
+      "description": "初始等级，仅接散客订单"
+    },
+    {
+      "id": 2,
+      "level": 1,
+      "level_name": "学徒匠人",
+      "threshold": 100,
+      "order_unlock": [
+        "WalkIn"
+      ],
+      "description": "散客订单奖励提升"
+    },
+    {
+      "id": 3,
+      "level": 2,
+      "level_name": "熟练匠人",
+      "threshold": 300,
+      "order_unlock": [
+        "WalkIn",
+        "Regional"
+      ],
+      "description": "解锁区域倾向订单"
+    },
+    {
+      "id": 4,
+      "level": 3,
+      "level_name": "精工匠人",
+      "threshold": 600,
+      "order_unlock": [
+        "WalkIn",
+        "Regional"
+      ],
+      "description": "区域订单奖励提升"
+    },
+    {
+      "id": 5,
+      "level": 4,
+      "level_name": "名家匠人",
+      "threshold": 1000,
+      "order_unlock": [
+        "WalkIn",
+        "Regional",
+        "Guild"
+      ],
+      "description": "解锁公会订单"
+    },
+    {
+      "id": 6,
+      "level": 5,
+      "level_name": "大师匠人",
+      "threshold": 1500,
+      "order_unlock": [
+        "WalkIn",
+        "Regional",
+        "Guild"
+      ],
+      "description": "公会订单奖励提升"
+    },
+    {
+      "id": 7,
+      "level": 6,
+      "level_name": "宗师匠人",
+      "threshold": 2200,
+      "order_unlock": [
+        "WalkIn",
+        "Regional",
+        "Guild"
+      ],
+      "description": "解锁高级底材采购"
+    },
+    {
+      "id": 8,
+      "level": 7,
+      "level_name": "传奇匠人",
+      "threshold": 3000,
+      "order_unlock": [
+        "WalkIn",
+        "Regional",
+        "Guild"
+      ],
+      "description": "解锁传奇词缀池"
+    },
+    {
+      "id": 9,
+      "level": 8,
+      "level_name": "神话匠人",
+      "threshold": 4000,
+      "order_unlock": [
+        "WalkIn",
+        "Regional",
+        "Guild"
+      ],
+      "description": "解锁虚空腐化"
+    },
+    {
+      "id": 10,
+      "level": 9,
+      "level_name": "不朽匠人",
+      "threshold": 5500,
+      "order_unlock": [
+        "WalkIn",
+        "Regional",
+        "Guild"
+      ],
+      "description": "满级，全内容解锁"
+    }
+  ]
+}

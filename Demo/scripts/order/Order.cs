@@ -1,4 +1,4 @@
-// 挂载于: 无（纯数据模型，非节点脚本）
+// 挂载于: 无（运行时实例模型，非节点脚本）
 
 using Godot;
 
@@ -12,7 +12,7 @@ public enum OrderStatus
     Cancelled
 }
 
-public class OrderData
+public class Order
 {
     public int Id { get; set; }
     public string OrderName { get; set; } = "";
@@ -52,9 +52,9 @@ public class OrderData
         return RewardGold;
     }
 
-    public static OrderData FromRow(OrderRow row)
+    public static Order FromRow(OrderRow row)
     {
-        return new OrderData
+        return new Order
         {
             Id = row.Id,
             OrderName = row.OrderName,

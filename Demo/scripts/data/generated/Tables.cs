@@ -84,7 +84,7 @@ public class AffixRow
     public int Tier => _raw.GetInt("tier");
     public int RequiredILvl => _raw.GetInt("required_i_lvl");
     public int Weight => _raw.GetInt("weight");
-    public string StatModifiers => _raw.GetString("stat_modifiers");
+    public Dictionary<StatType, float> StatModifiers => _raw.GetDict<StatType, float>("stat_modifiers");
     public string Tag => _raw.GetString("tag");
 }
 

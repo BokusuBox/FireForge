@@ -347,6 +347,7 @@ CS_OUTPUT_DIR = os.path.join(ROOT_DIR, 'demo', 'scripts', 'data', 'generated')
 
 BASIC_TYPES = {'int', 'float', 'double', 'string', 'bool'}
 LIST_PATTERN = re.compile(r'^\(list#sep=(.)\),(.+)$')
+DICT_PATTERN = re.compile(r'^\(dict#sep=(.)\),(\w+),(\w+)$')
 BEAN_FULL_NAME_RE = re.compile(r'^(\w+)\.(\w+)$')
 
 
@@ -359,6 +360,14 @@ def parse_type(type_str, bean_defs=None):
             'kind': 'list',
             'separator': match.group(1),
             'element_type': elem_type
+        }
+    dict_match = DICT_PATTERN.match(type_str)
+    if dict_match:
+        return {
+            'kind': 'dict',
+            'separator': dict_match.group(1),
+            'key_type': dict_match.group(2),
+            'value_type': dict_match.group(3)
         }
     if type_str in BASIC_TYPES:
         return {
@@ -412,6 +421,26 @@ def convert_value(raw_value, type_info):
         if elem_type in BASIC_TYPES:
             return [convert_basic_value(p.strip(), elem_type) for p in parts]
         return [p.strip() for p in parts]
+    if type_info['kind'] == 'dict':
+        raw_str = str(raw_value)
+        if not raw_str:
+            return {}
+        result = {}
+        sep = type_info['separator']
+        key_type = type_info['key_type']
+        value_type = type_info['value_type']
+        for pair in raw_str.split(sep):
+            if ':' not in pair:
+                continue
+            k, v = pair.split(':', 1)
+            k = k.strip()
+            v = v.strip()
+            if key_type in BASIC_TYPES:
+                k = convert_basic_value(k, key_type)
+            if value_type in BASIC_TYPES:
+                v = convert_basic_value(v, value_type)
+            result[k] = v
+        return result
     if type_info['kind'] == 'basic':
         return convert_basic_value(raw_value, type_info['type'])
     if type_info['kind'] == 'enum':
@@ -1058,6 +1087,30 @@ public class TableRecord
         return new List<T>();
     }
 
+    public Dictionary<K, V> GetDict<K, V>(string name)
+    {
+        var raw = GetRaw(name);
+        if (raw is Dictionary<K, V> dict)
+            return dict;
+        if (raw is Godot.Collections.Dictionary godotDict)
+        {
+            var result = new Dictionary<K, V>();
+            foreach (var key in godotDict.Keys)
+            {
+                if (key is K typedKey && godotDict[key] is V typedVal)
+                    result[typedKey] = typedVal;
+                else if (typeof(K).IsEnum && key is string keyStr)
+                {
+                    var enumKey = (K)Enum.Parse(typeof(K), keyStr);
+                    if (godotDict[key] is V v)
+                        result[enumKey] = v;
+                }
+            }
+            return result;
+        }
+        return new Dictionary<K, V>();
+    }
+
     public override string ToString()
     {
         var parts = new List<string>();
@@ -1403,6 +1456,10 @@ def resolve_wrapper_cs_type(type_str, bean_defs):
         elem = type_info['element_type']
         elem_cs = resolve_wrapper_cs_type(elem, bean_defs)
         return f'List<{elem_cs}>'
+    elif type_info['kind'] == 'dict':
+        key_cs = type_info['key_type']
+        val_cs = type_info['value_type']
+        return f'Dictionary<{key_cs}, {val_cs}>'
     return type_str
 
 
@@ -1444,6 +1501,19 @@ def get_field_accessor(type_str, field_name, bean_defs):
             return f'_raw.GetBeanList<{short}>("{field_name}")'
         else:
             return f'_raw.GetList<string>("{field_name}")'
+    elif type_info['kind'] == 'dict':
+        key_type = type_info['key_type']
+        val_type = type_info['value_type']
+        key_info = parse_type(key_type, bean_defs)
+        val_info = parse_type(val_type, bean_defs)
+        if key_info['kind'] == 'enum' and val_info['kind'] == 'basic':
+            return f'_raw.GetDict<{key_type}, {val_type}>("{field_name}")'
+        elif key_info['kind'] == 'enum':
+            return f'_raw.GetDict<{key_type}, {val_type}>("{field_name}")'
+        elif val_info['kind'] == 'enum':
+            return f'_raw.GetDict<{key_type}, {val_type}>("{field_name}")'
+        else:
+            return f'_raw.GetDict<{key_type}, {val_type}>("{field_name}")'
     return f'_raw.GetString("{field_name}")'
 
 

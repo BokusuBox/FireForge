@@ -1,8 +1,8 @@
-// 挂载于: 无（纯数据模型，非节点脚本）
+// 挂载于: 无（运行时实例模型，非节点脚本）
 
 using System.Collections.Generic;
 
-public class EquipmentData
+public class Equipment
 {
     public int Id { get; set; }
     public string EquipmentName { get; set; } = "";
@@ -16,8 +16,8 @@ public class EquipmentData
     public int PrefixSlots { get; set; }
     public int SuffixSlots { get; set; }
     public List<int> SkillPool { get; set; } = new();
-    public List<AffixData> Prefixes { get; set; } = new();
-    public List<AffixData> Suffixes { get; set; } = new();
+    public List<AffixRow> Prefixes { get; set; } = new();
+    public List<AffixRow> Suffixes { get; set; } = new();
     public bool IsCorrupted { get; set; }
 
     public int UsedPrefixSlots => Prefixes.Count;
@@ -27,9 +27,9 @@ public class EquipmentData
     public bool HasPrefixSpace => UsedPrefixSlots < PrefixSlots;
     public bool HasSuffixSpace => UsedSuffixSlots < SuffixSlots;
 
-    public static EquipmentData FromRow(EquipmentRow row)
+    public static Equipment FromRow(EquipmentRow row)
     {
-        return new EquipmentData
+        return new Equipment
         {
             Id = row.Id,
             EquipmentName = row.EquipmentName,

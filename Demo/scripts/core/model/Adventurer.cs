@@ -1,8 +1,8 @@
-// 挂载于: 无（纯数据模型，非节点脚本）
+// 挂载于: 无（运行时实例模型，非节点脚本）
 
 using System.Collections.Generic;
 
-public class AdventurerData
+public class Adventurer
 {
     public int Id { get; set; }
     public string AdventurerName { get; set; } = "";
@@ -17,7 +17,7 @@ public class AdventurerData
     public float CritDmgMultiplier { get; set; }
     public float Cdr { get; set; }
     public List<int> PassiveTraitIds { get; set; } = new();
-    public Dictionary<EquipmentSlot, EquipmentData> EquippedItems { get; set; } = new();
+    public Dictionary<EquipmentSlot, Equipment> EquippedItems { get; set; } = new();
 
     public float GetAggregatedStat(StatType type)
     {
@@ -25,9 +25,11 @@ public class AdventurerData
         foreach (var eq in EquippedItems.Values)
         {
             foreach (var affix in eq.Prefixes)
-                total += affix.GetStat(type);
+                if (affix.StatModifiers.TryGetValue(type, out var v))
+                    total += v;
             foreach (var affix in eq.Suffixes)
-                total += affix.GetStat(type);
+                if (affix.StatModifiers.TryGetValue(type, out var v))
+                    total += v;
         }
         return total;
     }
@@ -54,7 +56,7 @@ public class AdventurerData
         }
     }
 
-    public bool Equip(EquipmentData equipment)
+    public bool Equip(Equipment equipment)
     {
         if (EquippedItems.ContainsKey(equipment.Slot))
             return false;
@@ -62,7 +64,7 @@ public class AdventurerData
         return true;
     }
 
-    public EquipmentData Unequip(EquipmentSlot slot)
+    public Equipment Unequip(EquipmentSlot slot)
     {
         if (!EquippedItems.TryGetValue(slot, out var equipment))
             return null;
@@ -70,9 +72,9 @@ public class AdventurerData
         return equipment;
     }
 
-    public static AdventurerData FromRow(AdventurerRow row)
+    public static Adventurer FromRow(AdventurerRow row)
     {
-        var data = new AdventurerData
+        return new Adventurer
         {
             Id = row.Id,
             AdventurerName = row.AdventurerName,
@@ -88,7 +90,5 @@ public class AdventurerData
             Cdr = row.Cdr,
             PassiveTraitIds = new List<int>(row.PassiveTrait),
         };
-
-        return data;
     }
 }

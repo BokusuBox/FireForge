@@ -100,15 +100,15 @@
 
 | 所属模型 | 字段 | 当前类型 | 暂代原因 | 后续方案 |
 |----------|------|----------|----------|----------|
-| ArchetypeData | `CorrectAffixGroups` | `List<int>` | 引用词缀组ID，但组ID格式为101/102等，与affix表group_id字段对齐待验证 | 锻造引擎开发时验证关联查询 |
-| ArchetypeData | `CalculateTargetScore()` | 运行时方法 | 公式系数(Tier乘区0.3步进/iLvl缩放)为初版估算 | 战斗系统数值平衡时调参 |
-| SkillData | `ThresholdLevels` | `List<int>` (从string解析) | 阈值坎效果描述仅在description字段文字说明 | 后续建 skill_threshold.xlsx 拆分每个坎的具体效果数值 |
-| SkillData | `Description` | `string` | 技能效果描述为纯文本，战斗系统无法直接解析 | 后续拆分为结构化效果字段 |
+| ArchetypeRow | `CorrectAffixGroups` | `List<int>` | 引用词缀组ID，但组ID格式为101/102等，与affix表group_id字段对齐待验证 | 锻造引擎开发时验证关联查询 |
+| ArchetypeRow | `CalculateTargetScore()` | 运行时方法 | 公式系数(Tier乘区0.3步进/iLvl缩放)为初版估算 | 战斗系统数值平衡时调参 |
+| SkillRow | `ThresholdLevels` | `List<int>` (从string解析) | 阈值坎效果描述仅在description字段文字说明 | 后续建 skill_threshold.xlsx 拆分每个坎的具体效果数值 |
+| SkillRow | `Description` | `string` | 技能效果描述为纯文本，战斗系统无法直接解析 | 后续拆分为结构化效果字段 |
 
 ### 1.3 词缀库引擎
-- [ ] `AffixDb.cs` - 词缀数据库加载器（从 JSON 读取并缓存）
-- [ ] `AffixRoller.cs` - 词缀抽取漏斗引擎（iLvl过滤 → 同组去重 → 权重Roll点 → 三选一生成）
-- [ ] 创建最小词缀库 JSON（3-4个词缀组 × 3个Tier）
+- [x] `AffixRegistry.cs` - 词缀注册表（从 Tables.Affix 加载并按 Group/Slot/Id 建立索引；提供候选词缀查询）
+- [x] `AffixRoller.cs` - 词缀抽取漏斗引擎（iLvl过滤 → 同组去重 → 权重Roll点 → 三选一/单抽）
+- [x] `affix.xlsx` - 词缀配表（4个词缀组 × 5个Tier：纯攻击/纯护甲/战意/锐利；stat_modifiers 字段类型为 `(dict#sep=|),StatType,float`）
 
 ### 1.4 全局管理器（GameRoot 架构）
 - [x] `GameRoot.cs` - 唯一 Autoload 入口，内部管理所有子 Manager 生命周期与初始化顺序
@@ -120,13 +120,20 @@
 - [x] `ObjectPool.cs` - 泛型对象池（支持 PackedScene/new T() 双模式，预热/容量上限/进程控制）
 
 ### 1.5 数据访问层
+- [x] xlsx2json 扩展支持 `dict` 类型：`(dict#sep=X),KeyType,ValueType` 格式，Tables.cs 直接生成 `Dictionary<K,V>`
 - [ ] `TableManager` 改为延迟加载模式：首次 `GetTable()` 时才加载 JSON，可选 `PreloadTables()` 预加载核心表
 - [ ] `TableManager` 新增 `GetTable<T>()` 泛型方法，返回强类型表包装
-- [ ] 业务代码统一走强类型包装，禁止直接使用 `TableRecord.GetXxx()`
 
-### 1.6 特质配表（Trait System）
+### 1.6 运行时实例模型
+- [x] `Adventurer.cs` - 冒险者运行时实例（装备槽位管理、属性聚合计算）
+- [x] `Equipment.cs` - 装备运行时实例（AP消耗状态、词缀槽位管理）
+- [x] `Order.cs` - 订单运行时实例（状态流转、奖励计算）
+- [x] 删除纯静态配置脚本：AffixData, SkillData, TraitData, CurrencyData, ArchetypeData, ArchetypeSquadData（直接使用 XxxRow）
+
+### 1.7 特质配表（Trait System）
 - [x] `trait.xlsx` - 特质配表（字段：id, trait_type, trait_name, trigger_type, trigger_condition, effect_type, stat_type, value, duration, priority, description）
-- [x] `TraitData.cs` - 特质运行时模型（从 TraitRow 构建，包含效果数值/乘区归属/触发条件）
+- [x] `TraitContext.cs` - 特质触发上下文（提供 hp/maxhp/combat_time/enemy_count 等变量）
+- [x] `TraitConditionParser.cs` - 条件表达式解析器（解析 `hp:<30&enemyhp:>50` 格式）
 - [x] `TraitContext.cs` - 特质触发上下文（提供hp/maxhp/combat_time等变量）
 - [x] `TraitConditionParser.cs` - 条件表达式解析器（支持变量:操作符:值格式，支持&/|组合）
 - [x] `AdventurerData.PassiveTraitIds` 从 `List<TraitType>` 改为 `List<int>` 引用特质ID
@@ -209,3 +216,5 @@
 | 2026-04-10 | M1-1.6 | 完成特质系统（Trait System）开发 | trait.xlsx表头格式不正确导致未生成 | 修复表头格式（##字段名称行），成功导出TraitRow/TraitTable |
 | 2026-04-10 | M1-1.6 | 创建TraitContext/TraitConditionParser | - | 支持复杂条件表达式（hp:<30&enemyhp:>50），支持&/|逻辑组合 |
 | 2026-04-10 | M1-1.4 | 完成全局管理器（GameRoot架构）开发 | - | EventBus发布订阅+ISaveable存档接口+SaveManager多存档位+ResourceManager金币通货+ReputationManager声望阶梯+ObjectPool泛型对象池+GameRoot统一入口 |
+| 2026-04-10 | M1-1.3 | 完成词缀库引擎开发 | - | AffixRegistry词缀注册表（Group/Slot/Id索引）+AffixRoller漏斗引擎（单抽/三选一/指定组/指定Tag） |
+| 2026-04-11 | M1-架构 | 架构重构：消除中间层 | 修改表结构时需手动维护Data脚本 | xlsx2json扩展dict类型；删除纯静态配置脚本；重命名运行时实例（XXXData→XXX） |

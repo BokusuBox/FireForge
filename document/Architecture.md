@@ -18,7 +18,7 @@
 │  ├─ CombatManager [规划]  └─ ShopManager [规划]               │
 ├─────────────────────────────────────────────────────────────┤
 │                  业务引擎层 (按模块隔离)                        │
-│  AffixDb | AffixRoller | ThresholdAggregator | SkillEngine   │
+│  AffixRegistry | AffixRoller | ThresholdAggregator | SkillEngine   │
 │  CombatAI | OrderGenerator | TraitConditionParser            │
 ├─────────────────────────────────────────────────────────────┤
 │                  数据模型层 (运行时业务模型)                     │
@@ -83,16 +83,22 @@ document/               # 项目文档
 | `ReputationManager.cs` | ✅ 已完成 | GameRoot 子节点 (ISaveable) | 声望等级管理：从 reputation.xlsx 配表加载阈值/等级名/订单解锁；进度查询/升级检测 | EventBus, ISaveable, TableManager |
 | `ObjectPool.cs` | ✅ 已完成 | 泛型工具类（非节点） | 通用对象池：PackedScene/new T() 双创建模式；预热/归还/容量上限/进程控制 | Godot.Node |
 
-#### 📦 数据模型 (`scripts/core/model/`)
+#### 📦 运行时实例模型 (`scripts/core/model/`)
 
 | 脚本 | 状态 | 定位 | 功能 | 关联配表 |
 |------|------|------|------|----------|
-| `AdventurerData.cs` | ✅ 已完成 | 冒险者运行时模型 | 冒险者属性：等级/HP/基础攻防/攻速/移速/暴击/暴伤/CDR/被动特质ID列表 | adventurer.xlsx |
-| `EquipmentData.cs` | ✅ 已完成 | 装备运行时模型 | 装备属性：底材名/iLvl/MaxAP/基础白值/前后缀槽位/技能池 | equipment.xlsx |
-| `AffixData.cs` | ✅ 已完成 | 词缀运行时模型 | 词缀属性：Group/Tier/iLvl门槛/Weight/StatModifiers/Tag | affix.xlsx |
-| `TraitData.cs` | ✅ 已完成 | 特质运行时模型 | 特质效果：触发类型/条件表达式/效果类型/StatType/数值/持续时间/优先级 | trait.xlsx |
+| `Adventurer.cs` | ✅ 已完成 | 冒险者运行时实例 | 冒险者属性：等级/HP/基础攻防/攻速/移速/暴击/暴伤/CDR/被动特质ID列表；装备槽位管理；属性聚合计算 | adventurer.xlsx |
+| `Equipment.cs` | ✅ 已完成 | 装备运行时实例 | 装备属性：底材名/iLvl/MaxAP/基础白值/前后缀槽位/技能池；AP消耗状态；词缀槽位管理 | equipment.xlsx |
 | `TraitContext.cs` | ✅ 已完成 | 特质触发上下文 | 提供 hp/maxhp/combat_time/enemy_count 等变量供条件表达式读取 | 无 |
 | `TraitConditionParser.cs` | ✅ 已完成 | 条件表达式解析器 | 解析 `hp:<30&enemyhp:>50` 格式，支持变量:操作符:值，支持 &/ 逻辑组合 | 无 |
+| `AffixRegistry.cs` | ✅ 已完成 | 词缀注册表 | 从 Tables.Affix 加载词缀数据，按 Group/Slot/Id 建立索引；提供候选词缀查询 | affix.xlsx |
+| `AffixRoller.cs` | ✅ 已完成 | 词缀抽取漏斗引擎 | iLvl过滤 → 同组去重 → 权重Roll点；提供单抽/三选一/指定组/指定Tag抽取 | AffixRegistry |
+
+#### 📦 订单模块运行时实例 (`scripts/order/`)
+
+| 脚本 | 状态 | 定位 | 功能 | 关联配表 |
+|------|------|------|------|----------|
+| `Order.cs` | ✅ 已完成 | 订单运行时实例 | 订单属性：名称/类型/难度/最低声望/流派ID/变体/冒险者/装备数/奖励；状态流转；奖励计算 | order.xlsx |
 
 #### 📋 配表
 
@@ -106,7 +112,6 @@ document/               # 项目文档
 
 | 脚本 | 状态 | 定位 | 功能 | 依赖 |
 |------|------|------|------|------|
-| `CurrencyData.cs` | ✅ 已完成 | 通货运行时模型 | 通货属性：名称/AP消耗/效果类型枚举/工作室等级闸门 | currency.xlsx |
 | `CraftingManager.cs` | 🔲 规划中 | 锻造流程控制器 | 状态机：空闲→放入底材→选择通货→三选一→确认/超限；AP扣减/通货消耗/0AP超限腐化 | ResourceManager, AffixRoller, EventBus |
 
 ---
@@ -115,11 +120,10 @@ document/               # 项目文档
 
 | 脚本 | 状态 | 定位 | 功能 | 依赖 |
 |------|------|------|------|------|
-| `SkillData.cs` | ✅ 已完成 | 技能运行时模型 | 技能属性：名称/类型/触发条件/阈值坎/冷却 | skill.xlsx |
 | `CombatManager.cs` | 🔲 规划中 | 战斗流程控制器 | 初始化→实时循环→结束判定 | EventBus, ObjectPool |
-| `CombatUnit.cs` | 🔲 规划中 | 战斗单位 | 挂载 CharacterBody2D，俯视角移动+攻击 | AdventurerData, EquipmentData |
-| `ThresholdAggregator.cs` | 🔲 规划中 | 阈值汇总器 | 遍历全身装备，汇总技能等级，判断阈值坎 | EquipmentData, SkillData |
-| `SkillEngine.cs` | 🔲 规划中 | 技能执行引擎 | 根据阈值激活技能效果 | SkillData, TraitData |
+| `CombatUnit.cs` | 🔲 规划中 | 战斗单位 | 挂载 CharacterBody2D，俯视角移动+攻击 | Adventurer, Equipment |
+| `ThresholdAggregator.cs` | 🔲 规划中 | 阈值汇总器 | 遍历全身装备，汇总技能等级，判断阈值坎 | Equipment, SkillRow |
+| `SkillEngine.cs` | 🔲 规划中 | 技能执行引擎 | 根据阈值激活技能效果 | SkillRow, TraitRow |
 | `CombatAI.cs` | 🔲 规划中 | 自动战斗 AI | 优先级决策树：有技能放技能→普攻→低血防御 | CombatUnit |
 | `CombatResult.cs` | 🔲 规划中 | 战斗结果数据 | 得分/是否达标/DPS统计 | 无 |
 
@@ -129,9 +133,6 @@ document/               # 项目文档
 
 | 脚本 | 状态 | 定位 | 功能 | 依赖 |
 |------|------|------|------|------|
-| `OrderData.cs` | ✅ 已完成 | 订单运行时模型 | 订单属性：名称/类型/难度/最低声望/流派ID/变体/冒险者/装备数/奖励 | order.xlsx |
-| `ArchetypeData.cs` | ✅ 已完成 | 流派模板运行时模型 | 流派属性：名称/维度/难度范围/底材标签/正确词缀组/小队池/场景锚点 | archetype.xlsx |
-| `ArchetypeSquadData.cs` | ✅ 已完成 | 流派小队运行时模型 | 小队成员：小队池ID/冒险者ID/角色标签/数量 | archetype_squad.xlsx |
 | `OrderGenerator.cs` | 🔲 规划中 | 订单生成引擎 | 根据声望等级生成订单 | ReputationManager, TableManager |
 
 ---
@@ -157,12 +158,12 @@ document/               # 项目文档
 
 ---
 
-### 3.7 词缀引擎 (`scripts/core/` 中规划)
+### 3.7 词缀引擎 (`scripts/core/model/`)
 
 | 脚本 | 状态 | 定位 | 功能 | 依赖 |
 |------|------|------|------|------|
-| `AffixDb.cs` | 🔲 规划中 | 词缀数据库加载器 | 从 JSON 读取并缓存词缀数据，按 Group/Tier/iLvl 索引 | TableManager, AffixData |
-| `AffixRoller.cs` | 🔲 规划中 | 词缀抽取漏斗引擎 | iLvl过滤 → 同组去重 → 权重Roll点 → 三选一生成 | AffixDb |
+| `AffixRegistry.cs` | ✅ 已完成 | 词缀注册表 | 从 Tables.Affix 加载词缀数据，按 Group/Slot/Id 建立索引 | affix.xlsx |
+| `AffixRoller.cs` | ✅ 已完成 | 词缀抽取漏斗引擎 | iLvl过滤 → 同组去重 → 权重Roll点；提供单抽/三选一/指定组/指定Tag抽取 | AffixRegistry |
 
 ---
 
@@ -173,10 +174,10 @@ document/               # 项目文档
 | `__enum__.cs` | 枚举定义 | 从 xlsx 收集的所有枚举类型（AdventurerRole, CurrencyType, OrderType 等 20 个） |
 | `__bean__.cs` | 结构体定义 | Bean/结构体类型（ItemAward, ItemCost, DrawAward 等 6 个） |
 | `BeanConverter.cs` | Bean 转换器 | Dictionary ↔ Bean 结构体的序列化/反序列化 |
-| `TableRecord.cs` | 通用行记录 | 字典式行数据访问：GetInt/GetFloat/GetString/GetEnum/GetStringList 等 |
+| `TableRecord.cs` | 通用行记录 | 字典式行数据访问：GetInt/GetFloat/GetString/GetEnum/GetStringList/GetDict 等 |
 | `TableData.cs` | 通用表数据 | 表级操作：GetAll/FindById/索引构建/延迟加载 |
 | `TableManager.cs` | 表管理器 | 全局表注册中心：GetTable(name)/PreloadTables() |
-| `Tables.cs` | 强类型包装 | 每张表的 XxxRow（行包装）+ XxxTable（表包装），提供类型安全访问 |
+| `Tables.cs` | 强类型包装 | 每张表的 XxxRow（行包装）+ XxxTable（表包装），提供类型安全访问；支持 dict 类型字段 |
 
 ---
 
@@ -240,7 +241,7 @@ GameRoot (Autoload)
 | 配表 | 路径 | 状态 | 消费方 |
 |------|------|------|--------|
 | adventurer.xlsx | data/Adventurer/ | ✅ | AdventurerData |
-| affix.xlsx | data/Affix/ | ✅ | AffixData, AffixDb [规划] |
+| affix.xlsx | data/Affix/ | ✅ | AffixData, AffixRegistry |
 | archetype.xlsx | data/Archetype/ | ✅ | ArchetypeData |
 | archetype_squad.xlsx | data/Archetype/ | ✅ | ArchetypeSquadData |
 | currency.xlsx | data/Currency/ | ✅ | CurrencyData |
@@ -286,3 +287,5 @@ GameRoot (Autoload)
 | 日期 | 更新内容 |
 |------|----------|
 | 2026-04-10 | 初始版本：记录所有已完成脚本 + 规划脚本 + 架构分层 + 交互图 |
+| 2026-04-10 | 1.3 词缀库引擎：新增 AffixRegistry.cs + AffixRoller.cs；core/ 拆分为 manager/model 子目录 |
+| 2026-04-11 | 架构重构：删除纯静态配置脚本（直接使用 XxxRow）；重命名运行时实例（XXXData → XXX）；xlsx2json 扩展支持 dict 类型 |

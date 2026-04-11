@@ -84,6 +84,30 @@ public class TableRecord
         return new List<T>();
     }
 
+    public Dictionary<K, V> GetDict<K, V>(string name)
+    {
+        var raw = GetRaw(name);
+        if (raw is Dictionary<K, V> dict)
+            return dict;
+        if (raw is Godot.Collections.Dictionary godotDict)
+        {
+            var result = new Dictionary<K, V>();
+            foreach (var key in godotDict.Keys)
+            {
+                if (key is K typedKey && godotDict[key] is V typedVal)
+                    result[typedKey] = typedVal;
+                else if (typeof(K).IsEnum && key is string keyStr)
+                {
+                    var enumKey = (K)Enum.Parse(typeof(K), keyStr);
+                    if (godotDict[key] is V v)
+                        result[enumKey] = v;
+                }
+            }
+            return result;
+        }
+        return new Dictionary<K, V>();
+    }
+
     public override string ToString()
     {
         var parts = new List<string>();

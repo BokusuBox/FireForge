@@ -38,7 +38,7 @@
     },
     {
       "name": "stat_modifiers",
-      "type": "string",
+      "type": "(dict#sep=|),StatType,float",
       "comment": "属性修改(格式: stat:value|stat:value)"
     },
     {
@@ -56,7 +56,9 @@
       "tier": 5,
       "required_i_lvl": 1,
       "weight": 1000,
-      "stat_modifiers": "Attack:1",
+      "stat_modifiers": {
+        "Attack": 1.0
+      },
       "tag": "attack"
     },
     {
@@ -67,7 +69,9 @@
       "tier": 4,
       "required_i_lvl": 10,
       "weight": 800,
-      "stat_modifiers": "Attack:2",
+      "stat_modifiers": {
+        "Attack": 2.0
+      },
       "tag": "attack"
     },
     {
@@ -78,7 +82,9 @@
       "tier": 3,
       "required_i_lvl": 30,
       "weight": 500,
-      "stat_modifiers": "Attack:3",
+      "stat_modifiers": {
+        "Attack": 3.0
+      },
       "tag": "attack"
     },
     {
@@ -89,7 +95,9 @@
       "tier": 2,
       "required_i_lvl": 50,
       "weight": 200,
-      "stat_modifiers": "Attack:4",
+      "stat_modifiers": {
+        "Attack": 4.0
+      },
       "tag": "attack"
     },
     {
@@ -100,7 +108,9 @@
       "tier": 1,
       "required_i_lvl": 70,
       "weight": 50,
-      "stat_modifiers": "Attack:5",
+      "stat_modifiers": {
+        "Attack": 5.0
+      },
       "tag": "attack"
     },
     {
@@ -111,7 +121,9 @@
       "tier": 5,
       "required_i_lvl": 1,
       "weight": 1000,
-      "stat_modifiers": "Armor:1",
+      "stat_modifiers": {
+        "Armor": 1.0
+      },
       "tag": "defense"
     },
     {
@@ -122,7 +134,9 @@
       "tier": 4,
       "required_i_lvl": 10,
       "weight": 800,
-      "stat_modifiers": "Armor:2",
+      "stat_modifiers": {
+        "Armor": 2.0
+      },
       "tag": "defense"
     },
     {
@@ -133,7 +147,9 @@
       "tier": 3,
       "required_i_lvl": 30,
       "weight": 500,
-      "stat_modifiers": "Armor:3",
+      "stat_modifiers": {
+        "Armor": 3.0
+      },
       "tag": "defense"
     },
     {
@@ -144,7 +160,9 @@
       "tier": 2,
       "required_i_lvl": 50,
       "weight": 200,
-      "stat_modifiers": "Armor:4",
+      "stat_modifiers": {
+        "Armor": 4.0
+      },
       "tag": "defense"
     },
     {
@@ -155,7 +173,9 @@
       "tier": 1,
       "required_i_lvl": 70,
       "weight": 50,
-      "stat_modifiers": "Armor:5",
+      "stat_modifiers": {
+        "Armor": 5.0
+      },
       "tag": "defense"
     },
     {
@@ -166,7 +186,10 @@
       "tier": 5,
       "required_i_lvl": 1,
       "weight": 600,
-      "stat_modifiers": "Attack:1|Armor:1",
+      "stat_modifiers": {
+        "Attack": 1.0,
+        "Armor": 1.0
+      },
       "tag": "attack|defense"
     },
     {
@@ -177,7 +200,10 @@
       "tier": 4,
       "required_i_lvl": 15,
       "weight": 400,
-      "stat_modifiers": "Attack:2|Armor:2",
+      "stat_modifiers": {
+        "Attack": 2.0,
+        "Armor": 2.0
+      },
       "tag": "attack|defense"
     },
     {
@@ -188,7 +214,10 @@
       "tier": 3,
       "required_i_lvl": 30,
       "weight": 250,
-      "stat_modifiers": "Attack:3|Armor:3",
+      "stat_modifiers": {
+        "Attack": 3.0,
+        "Armor": 3.0
+      },
       "tag": "attack|defense"
     },
     {
@@ -199,7 +228,10 @@
       "tier": 2,
       "required_i_lvl": 50,
       "weight": 100,
-      "stat_modifiers": "Attack:4|Armor:4",
+      "stat_modifiers": {
+        "Attack": 4.0,
+        "Armor": 4.0
+      },
       "tag": "attack|defense"
     },
     {
@@ -210,7 +242,10 @@
       "tier": 1,
       "required_i_lvl": 70,
       "weight": 25,
-      "stat_modifiers": "Attack:5|Armor:5",
+      "stat_modifiers": {
+        "Attack": 5.0,
+        "Armor": 5.0
+      },
       "tag": "attack|defense"
     },
     {
@@ -221,7 +256,9 @@
       "tier": 5,
       "required_i_lvl": 1,
       "weight": 800,
-      "stat_modifiers": "CritRate:1",
+      "stat_modifiers": {
+        "CritRate": 1.0
+      },
       "tag": "crit"
     },
     {
@@ -232,7 +269,9 @@
       "tier": 4,
       "required_i_lvl": 15,
       "weight": 600,
-      "stat_modifiers": "CritRate:2",
+      "stat_modifiers": {
+        "CritRate": 2.0
+      },
       "tag": "crit"
     },
     {
@@ -243,7 +282,9 @@
       "tier": 3,
       "required_i_lvl": 35,
       "weight": 300,
-      "stat_modifiers": "CritRate:3",
+      "stat_modifiers": {
+        "CritRate": 3.0
+      },
       "tag": "crit"
     },
     {
@@ -254,7 +295,9 @@
       "tier": 2,
       "required_i_lvl": 55,
       "weight": 120,
-      "stat_modifiers": "CritRate:4",
+      "stat_modifiers": {
+        "CritRate": 4.0
+      },
       "tag": "crit"
     },
     {
@@ -265,7 +308,9 @@
       "tier": 1,
       "required_i_lvl": 75,
       "weight": 30,
-      "stat_modifiers": "CritRate:5",
+      "stat_modifiers": {
+        "CritRate": 5.0
+      },
       "tag": "crit"
     }
   ]

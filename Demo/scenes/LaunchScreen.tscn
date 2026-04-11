@@ -1,0 +1,74 @@
+[gd_scene format=3 uid="uid://bw8lehb7ang8b"]
+
+[ext_resource type="Script" uid="uid://dbvna5k232tfh" path="res://scripts/ui/LaunchScreen.cs" id="1_script"]
+
+[node name="LaunchScreen" type="Control" unique_id=1131276115]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1861703119]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 80
+theme_override_constants/margin_top = 60
+theme_override_constants/margin_right = 80
+theme_override_constants/margin_bottom = 60
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=447672139]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1817240617]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "FireForge"
+horizontal_alignment = 1
+
+[node name="ResolutionRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=85508804]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ResolutionLabel" type="Label" parent="MarginContainer/VBoxContainer/ResolutionRow" unique_id=2123908573]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "分辨率："
+vertical_alignment = 1
+
+[node name="ResolutionOption" type="OptionButton" parent="MarginContainer/VBoxContainer/ResolutionRow" unique_id=1582198343]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+
+[node name="WindowModeRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=60470240]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="WindowModeLabel" type="Label" parent="MarginContainer/VBoxContainer/WindowModeRow" unique_id=46641041]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "窗口模式："
+vertical_alignment = 1
+
+[node name="WindowModeOption" type="OptionButton" parent="MarginContainer/VBoxContainer/WindowModeRow" unique_id=1352653475]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer" unique_id=2081029716]
+layout_mode = 2
+
+[node name="StartButton" type="Button" parent="MarginContainer/VBoxContainer" unique_id=54731436]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "开始游戏"

@@ -2,7 +2,7 @@
 
 using Godot;
 using Godot.Collections;
-using System.Collections.Generic;
+using SysDict = System.Collections.Generic.Dictionary<CurrencyType, int>;
 
 public partial class ResourceManager : Node, ISaveable
 {
@@ -11,7 +11,7 @@ public partial class ResourceManager : Node, ISaveable
     public string SaveKey => "resource";
 
     private int _gold;
-    private readonly Dictionary<CurrencyType, int> _currencies = new();
+    private readonly SysDict _currencies = new();
 
     public int Gold
     {
@@ -94,9 +94,11 @@ public partial class ResourceManager : Node, ISaveable
 
     public void Deserialize(Dictionary data)
     {
-        _gold = data.GetValueOrDefault("gold", 0).AsInt32();
+        _gold = data.ContainsKey("gold") ? ((Variant)data["gold"]).AsInt32() : 0;
 
-        var currencyDict = data.GetValueOrDefault("currencies", new Dictionary()).AsGodotDictionary();
+        var currencyDict = data.ContainsKey("currencies")
+            ? ((Variant)data["currencies"]).AsGodotDictionary()
+            : new Dictionary();
         if (currencyDict != null)
         {
             foreach (var kv in currencyDict)

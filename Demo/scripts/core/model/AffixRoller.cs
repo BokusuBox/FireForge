@@ -8,7 +8,7 @@ using System.Linq;
 public class AffixRoller
 {
     private readonly AffixRegistry _registry;
-    private readonly Random _rng = new();
+    private Random _rng = new();
 
     public AffixRoller(AffixRegistry registry)
     {
@@ -85,6 +85,6 @@ public class AffixRoller
 
     public void SetSeed(int seed)
     {
-        _rng.Initialize(new byte[4] { (byte)seed, (byte)(seed >> 8), (byte)(seed >> 16), (byte)(seed >> 24) });
+        _rng = new Random(seed);
     }
 }

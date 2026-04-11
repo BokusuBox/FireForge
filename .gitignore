@@ -90,3 +90,5 @@ $RECYCLE.BIN/
 
 # Built Visual Studio Code Extensions
 *.vsix
+output
+export_templates.tpz

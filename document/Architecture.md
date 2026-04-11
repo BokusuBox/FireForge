@@ -13,9 +13,9 @@
 ├─────────────────────────────────────────────────────────────┤
 │                  管理器层 (Autoload 单例)                      │
 │  GameRoot (唯一入口)                                          │
-│  ├─ SaveManager          ├─ ResourceManager                  │
-│  ├─ ReputationManager    ├─ CraftingManager [规划]            │
-│  ├─ CombatManager [规划]  └─ ShopManager [规划]               │
+│  ├─ GameSettings          ├─ SaveManager                      │
+│  ├─ ResourceManager      ├─ ReputationManager                │
+│  ├─ CraftingManager [规划] └─ ShopManager [规划]               │
 ├─────────────────────────────────────────────────────────────┤
 │                  业务引擎层 (按模块隔离)                        │
 │  AffixRegistry | AffixRoller | ThresholdAggregator | SkillEngine   │
@@ -47,7 +47,7 @@
 ```
 demo/scripts/
 ├── core/               # 核心系统
-│   ├── manager/        #   全局管理器（GameRoot, SaveManager, ResourceManager, ReputationManager）
+│   ├── manager/        #   全局管理器（GameRoot, GameSettings, SaveManager, ResourceManager, ReputationManager）
 │   ├── model/          #   数据模型（AdventurerData, EquipmentData, AffixData, TraitData 等）
 │   ├── EventBus.cs     #   全局事件总线（静态工具类）
 │   ├── ISaveable.cs    #   存档接口
@@ -75,13 +75,14 @@ document/               # 项目文档
 
 | 脚本 | 状态 | 定位 | 功能 | 依赖 |
 |------|------|------|------|------|
-| `GameRoot.cs` | ✅ 已完成 | Autoload 唯一入口 | 管理所有子 Manager 生命周期与初始化顺序；窗口关闭时自动存档 | SaveManager, ResourceManager, ReputationManager |
+| `GameRoot.cs` | ✅ 已完成 | Autoload 唯一入口 | 管理所有子 Manager 生命周期与初始化顺序；窗口关闭时自动存档 | GameSettings, SaveManager, ResourceManager, ReputationManager |
 | `EventBus.cs` | ✅ 已完成 | 静态工具类（非节点） | 全局发布/订阅事件总线，Manager 间解耦通信；`GameEvents` 常量集合统一事件名 | 无 |
 | `ISaveable.cs` | ✅ 已完成 | 纯接口（非节点） | 存档契约：`SaveKey`（唯一标识）/ `Serialize()`（序列化）/ `Deserialize()`（反序列化） | Godot.Collections.Dictionary |
 | `SaveManager.cs` | ✅ 已完成 | GameRoot 子节点 | 中心化存档管理：注册 ISaveable → 遍历序列化 → JSON 写入；支持多存档位/存档信息查询/删除 | ISaveable, EventBus |
 | `ResourceManager.cs` | ✅ 已完成 | GameRoot 子节点 (ISaveable) | 金币与通货资源管理：增减操作带余额校验，变更自动广播 EventBus 事件 | EventBus, ISaveable |
 | `ReputationManager.cs` | ✅ 已完成 | GameRoot 子节点 (ISaveable) | 声望等级管理：从 reputation.xlsx 配表加载阈值/等级名/订单解锁；进度查询/升级检测 | EventBus, ISaveable, TableManager |
 | `ObjectPool.cs` | ✅ 已完成 | 泛型工具类（非节点） | 通用对象池：PackedScene/new T() 双创建模式；预热/归还/容量上限/进程控制 | Godot.Node |
+| `GameSettings.cs` | ✅ 已完成 | GameRoot 子节点 | 游戏设置管理：分辨率/窗口模式持久化（user://settings.json）；16:9等比拉伸强制；F11全屏切换；首次启动自动检测屏幕分辨率 | EventBus |
 
 #### 📦 运行时实例模型 (`scripts/core/model/`)
 
@@ -145,10 +146,11 @@ document/               # 项目文档
 
 ---
 
-### 3.6 UI 模块 (`scripts/ui/`) [规划]
+### 3.6 UI 模块 (`scripts/ui/`)
 
 | 脚本 | 状态 | 定位 | 功能 | 依赖 |
 |------|------|------|------|------|
+| `LaunchScreen.cs` | ✅ 已完成 | 启动设置界面 | 分辨率选择/窗口模式切换/设置应用并跳转主菜单 | GameSettings |
 | 铁砧主界面 | 🔲 规划中 | 锻造操作界面 | 装备面板 + AP进度条 + 通货选择栏 | CraftingManager |
 | 三选一弹窗 | 🔲 规划中 | 词缀选择 UI | 展示3个候选词缀供玩家选择 | AffixRoller |
 | 战斗 HUD | 🔲 规划中 | 战斗信息展示 | 双方血条 + 技能冷却指示 + 战斗计时 | CombatManager |
@@ -198,6 +200,7 @@ CombatEnded          ← [规划] CombatManager 发布
 EquipmentCrafted     ← [规划] CraftingManager 发布
 SaveCompleted        ← SaveManager 发布
 LoadCompleted        ← SaveManager 发布
+SettingsChanged      ← GameSettings 发布
 SceneChanged         ← [规划] 场景管理发布
 ```
 

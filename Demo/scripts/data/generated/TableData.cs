@@ -3,6 +3,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public class TableData
 {
@@ -29,19 +30,19 @@ public class TableData
             return;
         }
         var parsed = Json.ParseString(jsonText);
-        if (parsed == null || parsed.VariantType != Variant.Type.Dictionary)
+        if (parsed.VariantType == Variant.Type.Nil || parsed.VariantType != Variant.Type.Dictionary)
         {
             GD.PrintErr($"[TableData] JSON格式无效: {TableName}");
             IsLoaded = false;
             return;
         }
-        var root = new Godot.Collections.Dictionary(parsed);
+        var root = parsed.AsGodotDictionary();
 
         _fieldTypes.Clear();
         var fieldsArray = root["fields"].AsGodotArray();
         foreach (var entry in fieldsArray)
         {
-            var fieldDict = new Godot.Collections.Dictionary(entry);
+            var fieldDict = entry.AsGodotDictionary();
             var fieldName = fieldDict["name"].AsString();
             var fieldType = fieldDict["type"].AsString();
             _fieldTypes[fieldName] = fieldType;
@@ -50,14 +51,14 @@ public class TableData
         var dataArray = root["data"].AsGodotArray();
         foreach (var entry in dataArray)
         {
-            var dict = new Godot.Collections.Dictionary(entry);
+            var dict = entry.AsGodotDictionary();
             var record = new TableRecord(TableName);
 
             foreach (var keyObj in dict.Keys)
             {
                 var fieldName = keyObj.ToString();
                 var variant = dict[keyObj];
-                var fieldType = _fieldTypes.GetValueOrDefault(fieldName, "string");
+                var fieldType = _fieldTypes.TryGetValue(fieldName, out var ft) ? ft : "string";
                 object value = ConvertVariant(variant, fieldType);
                 record.SetField(fieldName, value);
             }
@@ -215,6 +216,6 @@ public class TableData
 
     public string GetFieldType(string fieldName)
     {
-        return _fieldTypes.GetValueOrDefault(fieldName, "");
+        return _fieldTypes.TryGetValue(fieldName, out var ft) ? ft : "";
     }
 }

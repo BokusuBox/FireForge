@@ -6,7 +6,6 @@ using System.Collections.Generic;
 public class ObjectPool<T> where T : Node, new()
 {
     private readonly Stack<T> _pool = new();
-    private readonly string _scenePath;
     private readonly PackedScene _scene;
     private readonly int _maxSize;
     private readonly Node _owner;
@@ -28,7 +27,7 @@ public class ObjectPool<T> where T : Node, new()
             var instance = CreateInstance();
             instance.SetProcess(false);
             instance.SetPhysicsProcess(false);
-            instance.Visible = false;
+            SetVisible(instance, false);
             _pool.Push(instance);
         }
     }
@@ -47,7 +46,7 @@ public class ObjectPool<T> where T : Node, new()
             var instance = _pool.Pop();
             instance.SetProcess(true);
             instance.SetPhysicsProcess(true);
-            instance.Visible = true;
+            SetVisible(instance, true);
             return instance;
         }
 
@@ -65,7 +64,7 @@ public class ObjectPool<T> where T : Node, new()
 
         instance.SetProcess(false);
         instance.SetPhysicsProcess(false);
-        instance.Visible = false;
+        SetVisible(instance, false);
 
         if (instance.GetParent() != null)
             instance.GetParent().RemoveChild(instance);
@@ -100,5 +99,13 @@ public class ObjectPool<T> where T : Node, new()
             return _scene.Instantiate<T>();
 
         return new T();
+    }
+
+    private static void SetVisible(Node node, bool visible)
+    {
+        if (node is CanvasItem ci)
+            ci.Visible = visible;
+        else if (node is Node3D n3d)
+            n3d.Visible = visible;
     }
 }

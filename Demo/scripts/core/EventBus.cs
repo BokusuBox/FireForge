@@ -94,5 +94,6 @@ public static class GameEvents
     public const string EquipmentCrafted = "EquipmentCrafted";
     public const string SaveCompleted = "SaveCompleted";
     public const string LoadCompleted = "LoadCompleted";
+    public const string SettingsChanged = "SettingsChanged";
     public const string SceneChanged = "SceneChanged";
 }

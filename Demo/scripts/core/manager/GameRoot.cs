@@ -6,6 +6,8 @@ public partial class GameRoot : Node
 {
     public static GameRoot Instance { get; private set; }
 
+    public GameSettings GameSettings { get; private set; }
+    public TableManager TableManager { get; private set; }
     public SaveManager SaveManager { get; private set; }
     public ResourceManager ResourceManager { get; private set; }
     public ReputationManager ReputationManager { get; private set; }
@@ -20,6 +22,8 @@ public partial class GameRoot : Node
 
     private void InitializeManagers()
     {
+        GameSettings = CreateChild<GameSettings>("GameSettings");
+        TableManager = CreateChild<TableManager>("TableManager");
         SaveManager = CreateChild<SaveManager>("SaveManager");
         ResourceManager = CreateChild<ResourceManager>("ResourceManager");
         ReputationManager = CreateChild<ReputationManager>("ReputationManager");

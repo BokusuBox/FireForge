@@ -76,8 +76,9 @@ public class TableRecord
             var result = new List<T>();
             foreach (var item in arr)
             {
-                if (item is Godot.Collections.Dictionary dict)
-                    result.Add(BeanConverter.FromDict<T>(dict));
+                var variant = (Variant)item;
+                if (variant.VariantType == Variant.Type.Dictionary)
+                    result.Add(BeanConverter.FromDict<T>(variant.AsGodotDictionary()));
             }
             return result;
         }
@@ -94,13 +95,29 @@ public class TableRecord
             var result = new Dictionary<K, V>();
             foreach (var key in godotDict.Keys)
             {
-                if (key is K typedKey && godotDict[key] is V typedVal)
-                    result[typedKey] = typedVal;
-                else if (typeof(K).IsEnum && key is string keyStr)
+                var keyVariant = (Variant)key;
+                var valVariant = godotDict[key];
+
+                if (typeof(K).IsEnum && keyVariant.VariantType == Variant.Type.String)
                 {
-                    var enumKey = (K)Enum.Parse(typeof(K), keyStr);
-                    if (godotDict[key] is V v)
-                        result[enumKey] = v;
+                    var enumKey = (K)Enum.Parse(typeof(K), keyVariant.AsString());
+                    if (valVariant.VariantType == Variant.Type.Int && typeof(V) == typeof(int))
+                        result[enumKey] = (V)(object)valVariant.AsInt32();
+                    else if (valVariant.VariantType == Variant.Type.Float && typeof(V) == typeof(float))
+                        result[enumKey] = (V)(object)valVariant.AsSingle();
+                    else if (valVariant.VariantType == Variant.Type.String && typeof(V) == typeof(string))
+                        result[enumKey] = (V)(object)valVariant.AsString();
+                }
+                else if (keyVariant.VariantType == Variant.Type.String && typeof(K) == typeof(string))
+                {
+                    var strKey = keyVariant.AsString();
+                    K typedKey = (K)(object)strKey;
+                    if (valVariant.VariantType == Variant.Type.Int && typeof(V) == typeof(int))
+                        result[typedKey] = (V)(object)valVariant.AsInt32();
+                    else if (valVariant.VariantType == Variant.Type.Float && typeof(V) == typeof(float))
+                        result[typedKey] = (V)(object)valVariant.AsSingle();
+                    else if (valVariant.VariantType == Variant.Type.String && typeof(V) == typeof(string))
+                        result[typedKey] = (V)(object)valVariant.AsString();
                 }
             }
             return result;

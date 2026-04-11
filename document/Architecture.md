@@ -176,7 +176,7 @@ document/               # 项目文档
 | `BeanConverter.cs` | Bean 转换器 | Dictionary ↔ Bean 结构体的序列化/反序列化 |
 | `TableRecord.cs` | 通用行记录 | 字典式行数据访问：GetInt/GetFloat/GetString/GetEnum/GetStringList/GetDict 等 |
 | `TableData.cs` | 通用表数据 | 表级操作：GetAll/FindById/索引构建/延迟加载 |
-| `TableManager.cs` | 表管理器 | 全局表注册中心：GetTable(name)/PreloadTables() |
+| `TableManager.cs` | 表管理器 | 全局表注册中心：延迟加载 GetTable(name)/GetTable\<T\>()、PreloadTables()/PreloadAllTables()、类型注册 |
 | `Tables.cs` | 强类型包装 | 每张表的 XxxRow（行包装）+ XxxTable（表包装），提供类型安全访问；支持 dict 类型字段 |
 
 ---
@@ -289,3 +289,4 @@ GameRoot (Autoload)
 | 2026-04-10 | 初始版本：记录所有已完成脚本 + 规划脚本 + 架构分层 + 交互图 |
 | 2026-04-10 | 1.3 词缀库引擎：新增 AffixRegistry.cs + AffixRoller.cs；core/ 拆分为 manager/model 子目录 |
 | 2026-04-11 | 架构重构：删除纯静态配置脚本（直接使用 XxxRow）；重命名运行时实例（XXXData → XXX）；xlsx2json 扩展支持 dict 类型 |
+| 2026-04-11 | 1.5 数据访问层：TableManager 延迟加载 + GetTable\<T\>() 泛型方法 + PreloadTables()；ReputationManager 改用 Tables.Reputation |

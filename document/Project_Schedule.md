@@ -121,8 +121,10 @@
 
 ### 1.5 数据访问层
 - [x] xlsx2json 扩展支持 `dict` 类型：`(dict#sep=X),KeyType,ValueType` 格式，Tables.cs 直接生成 `Dictionary<K,V>`
-- [ ] `TableManager` 改为延迟加载模式：首次 `GetTable()` 时才加载 JSON，可选 `PreloadTables()` 预加载核心表
-- [ ] `TableManager` 新增 `GetTable<T>()` 泛型方法，返回强类型表包装
+- [x] `TableManager` 改为延迟加载模式：首次 `GetTable()` 时才加载 JSON，可选 `PreloadTables()` 预加载核心表
+- [x] `TableManager` 新增 `GetTable<T>()` 泛型方法，返回强类型表包装
+- [x] `ReputationManager` 改用强类型 `Tables.Reputation` 替代原始 `GetTable("reputation")` + 手动包装
+- [x] `xlsx2json.py` 导表工具更新：`generate_table_manager_cs()` 接受 `all_tables` 参数，自动生成类型注册代码
 
 ### 1.6 运行时实例模型
 - [x] `Adventurer.cs` - 冒险者运行时实例（装备槽位管理、属性聚合计算）

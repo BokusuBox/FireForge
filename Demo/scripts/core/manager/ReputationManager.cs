@@ -56,7 +56,7 @@ public partial class ReputationManager : Node, ISaveable
 
     private void LoadConfig()
     {
-        var table = TableManager.Instance.GetTable("reputation");
+        var table = Tables.Reputation;
         if (table == null)
         {
             GD.PrintErr("[ReputationManager] reputation 表加载失败");
@@ -64,8 +64,7 @@ public partial class ReputationManager : Node, ISaveable
         }
 
         _levelConfigs = table.GetAll()
-            .OrderBy(r => r.GetInt("level"))
-            .Select(r => new ReputationRow(r))
+            .OrderBy(r => r.Level)
             .ToList();
 
         GD.Print($"[ReputationManager] 加载 {_levelConfigs.Count} 个声望等级配置");

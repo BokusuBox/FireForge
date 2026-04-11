@@ -220,3 +220,5 @@
 | 2026-04-10 | M1-1.4 | 完成全局管理器（GameRoot架构）开发 | - | EventBus发布订阅+ISaveable存档接口+SaveManager多存档位+ResourceManager金币通货+ReputationManager声望阶梯+ObjectPool泛型对象池+GameRoot统一入口 |
 | 2026-04-10 | M1-1.3 | 完成词缀库引擎开发 | - | AffixRegistry词缀注册表（Group/Slot/Id索引）+AffixRoller漏斗引擎（单抽/三选一/指定组/指定Tag） |
 | 2026-04-11 | M1-架构 | 架构重构：消除中间层 | 修改表结构时需手动维护Data脚本 | xlsx2json扩展dict类型；删除纯静态配置脚本；重命名运行时实例（XXXData→XXX） |
+| 2026-04-11 | M1-1.5 | 完成数据访问层优化 | TableManager启动时全量加载所有JSON，无泛型支持 | 延迟加载模式（首次GetTable时加载）+ GetTable\<T\>()泛型方法 + PreloadTables()预加载 + 类型注册自动生成 |
+| 2026-04-11 | M1-1.5 | ReputationManager改用强类型访问 | 原始GetTable("reputation")+手动包装冗余 | 改用Tables.Reputation强类型属性，代码更简洁 |

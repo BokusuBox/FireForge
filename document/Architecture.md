@@ -279,14 +279,3 @@ GameRoot (Autoload)
 | TraitEffectType | StatMultiplier, StatAdditive, ForceCrit, Immunity, Dot, Heal, Shield, Aura, Summon, Dispel | trait.xlsx |
 | TraitTriggerType | Always, OnCombatStart, OnCrit, OnHit, OnKill, OnDamageTaken, OnLowHp, OnHeal, OnDeath | trait.xlsx |
 | TraitType | IronWill, FirstStrike, ArcaneAffinity, LethalStrike, CritMultiplier, ArmorCounter, Undying, PoisonBlade, Regeneration, WarCry | trait.xlsx |
-
----
-
-## 七、更新日志
-
-| 日期 | 更新内容 |
-|------|----------|
-| 2026-04-10 | 初始版本：记录所有已完成脚本 + 规划脚本 + 架构分层 + 交互图 |
-| 2026-04-10 | 1.3 词缀库引擎：新增 AffixRegistry.cs + AffixRoller.cs；core/ 拆分为 manager/model 子目录 |
-| 2026-04-11 | 架构重构：删除纯静态配置脚本（直接使用 XxxRow）；重命名运行时实例（XXXData → XXX）；xlsx2json 扩展支持 dict 类型 |
-| 2026-04-11 | 1.5 数据访问层：TableManager 延迟加载 + GetTable\<T\>() 泛型方法 + PreloadTables()；ReputationManager 改用 Tables.Reputation |
